@@ -19,12 +19,44 @@
 import os
 import sys
 
+from setuptools import Extension, setup
+
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 SRC_DIR = os.path.join(THIS_DIR, "src")
 CONNECTOR_SRC_DIR = os.path.join(SRC_DIR, "polypheny", "connector")
 
 
-version = "0.1"
+VERSION = (1, 1, 1, None)  # Default
+
+try:
+    with open(
+        os.path.join(CONNECTOR_SRC_DIR, "generated_version.py"), encoding="utf-8"
+    ) as f:
+        exec(f.read())
+except Exception:
+    with open(os.path.join(CONNECTOR_SRC_DIR, "version.py"), encoding="utf-8") as f:
+        exec(f.read())
+version = ".".join([str(v) for v in VERSION if v is not None])
+
+# Parse command line flags
+
+# This list defines the options definitions in a set
+options_def = {
+    "--debug",
+}
+
+# Options is the final parsed command line options
+options = {e.lstrip("-"): False for e in options_def}
+
+for flag in options_def:
+    if flag in sys.argv:
+        options[flag.lstrip("-")] = True
+        sys.argv.remove(flag)
+
+def readme():
+    with open('README.md') as f:
+        return f.read()
+
 
 setup(
     name="polypheny-connector-python",
@@ -40,9 +72,7 @@ setup(
         "Issue tracker": "https://github.com/polypheny/Polypheny-DB/labels/A-python",
     },
     license="Apache License, Version 2.0",
-    packages=find_packages(),
     include_package_data=True,
-    cmdclass=cmdclass,
     command_options={
         'build_sphinx': {
             'version': ('setup.py', version),
@@ -52,6 +82,7 @@ setup(
     classifiers=[
         'Programming Language :: Python :: 3.6',
     ],
+    python_requires=">=3.6",
     install_requires=[
     ]
 )
