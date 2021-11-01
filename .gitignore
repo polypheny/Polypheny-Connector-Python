@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+.mypy_cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+env/
+build/
+dist/
+downloads/
+lib/
+lib64/
+parts/
+sdist/
+var/
+.installed.cfg
+/dist/
+/doc/_build/
+/doc/build/
+*.pyc
+
+# core dumps
+core.*
+
+# Editor specific
+.vscode
