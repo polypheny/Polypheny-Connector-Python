@@ -7,7 +7,6 @@ https://polypheny.org/documentation/
 Source code is also available at: https://github.com/polypheny/Polypheny-Connector-Python
 
 # Release Notes
-#-------------------------------------------------------------------------------
 
 
 ## 0.0.1
