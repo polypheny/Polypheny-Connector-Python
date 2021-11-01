@@ -15,25 +15,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# Python Db API v2
-# https://www.python.org/dev/peps/pep-0249/
 
-apilevel = "2.0"
-threadsafety = 1 # Threads may share the module, but not connections.
-paramstyle = "qmark" # Question mark style, e.g. ...WHERE name=?
+# According to https://www.python.org/dev/peps/pep-0249/#paramstyle
+SUPPORTED_PARAMSTYLES = {
+    "qmark",
+    "numeric",
+    "named",
+    "format",
+    "pyformat",
+}
 
-import logging
-from .version import VERSION
+class PolyphenyConnection(object):
+    """Implementation of the connection object for Polypheny-DB.
+    Use connect(..) to get the object.
 
-from .connection import PolyphenyConnection
-
-def Connect(**kwargs):
-    return PolyphenyConnection(**kwargs)
-
-
-connect = Connect
-
-POLYPHENY_CONNECTOR_VERSION = ".".join(str(v) for v in VERSION[0:3])
-__version__ = POLYPHENY_CONNECTOR_VERSION
-
-
+    """

@@ -1,0 +1,8 @@
+LICENSE
+README.md
+license_header.txt
+setup.py
+polypheny_connector_python.egg-info/PKG-INFO
+polypheny_connector_python.egg-info/SOURCES.txt
+polypheny_connector_python.egg-info/dependency_links.txt
+polypheny_connector_python.egg-info/top_level.txt
