@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://polypheny.org/">
+    <img src="https://polypheny.org/community/logo/logo-landscape.png">
+  </a>
+</p>
+
 # Polypheny Connector for Python
 
 This enables Python programs to access Polypheny databases, using an API that is compliant with the [Python Database API Specification v2.0 (PEP 249)](https://www.python.org/dev/peps/pep-0249/).
