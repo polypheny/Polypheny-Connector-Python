@@ -1,8 +1,5 @@
-<p align="center">
-  <a href="https://polypheny.org/">
-    <img src="https://polypheny.org/community/logo/logo-landscape.png">
-  </a>
-</p>
+
+<img align="left" width="80" height="80" src="https://polypheny.org/community/logo/logo.png" alt="Polypheny Logo">
 
 # Polypheny Connector for Python
 
