@@ -1,6 +1,8 @@
-<a href="https://polypheny.org/">
-    <img align="right" width="200" height="200" src="https://polypheny.org/community/logo/logo-landscape.png" alt="Resume application project app icon">
-</a>
+<p align="right" width="200" height="200">
+  <a href="https://polypheny.org/">
+    <img src="https://polypheny.org/community/logo/logo.png">
+  </a>
+</p>
 
 # Polypheny Connector for Python
 
