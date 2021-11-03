@@ -1,5 +1,5 @@
 
-<img align="right" width="100" height="100" src="https://polypheny.org/community/logo/logo.png" alt="Polypheny Logo">
+<img align="right" width="200" height="200" src="https://polypheny.org/community/logo/logo.png" alt="Polypheny Logo">
 
 # Polypheny Connector for Python
 
