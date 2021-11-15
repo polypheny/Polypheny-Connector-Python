@@ -22,8 +22,7 @@ import sys
 from setuptools import Extension, setup
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-SRC_DIR = os.path.join(THIS_DIR, "src")
-CONNECTOR_SRC_DIR = os.path.join(SRC_DIR, "polypheny", "connector")
+CONNECTOR_SRC_DIR = os.path.join(THIS_DIR, "polypheny")
 
 
 VERSION = (1, 1, 1, None)  # Default
