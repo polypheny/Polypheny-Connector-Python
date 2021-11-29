@@ -18,17 +18,42 @@
 # Python Db API v2
 # https://www.python.org/dev/peps/pep-0249/
 
+
 apilevel = "2.0"
 threadsafety = 1 # Threads may share the module, but not connections.
 paramstyle = "qmark" # Question mark style, e.g. ...WHERE name=?
 
-import logging
-from .version import VERSION
 
-from .connection import PolyphenyConnection
+import logging as logger
+from polypheny.version import VERSION
+from polypheny.avatica import PolyphenyAvaticaClient
+from polypheny.connection import PolyphenyConnection
 
-def Connect(**kwargs):
-    return PolyphenyConnection(**kwargs)
+
+def Connect(host, port, protocol="http", **kwargs):
+
+    """Connects to a Polypheny server.
+
+    :param host:
+        Polypheny server host, e.g. ``localhost``
+
+    :param port:
+        port to the Phoenix query server, e.g. ``20591``
+
+    :param protocol:
+        Transport protocol to connect to host, e.g. ``http`` or ``https``
+
+    :param max_retries:
+        The maximum number of retries in case there is a connection error.
+
+    :returns:
+        :class:`~polypheny.connection.PolyphenyConnection` object.
+    """
+
+    polypheny_client = PolyphenyAvaticaClient(host, port, protocol)
+    polypheny_client.connect()
+    return PolyphenyConnection(polypheny_client, **kwargs)
+    
 
 
 connect = Connect

@@ -23,10 +23,8 @@ __all__ = [
     'ProgrammingError', 'NotSupportedError',
 ]
 
-try:
-    _StandardError = StandardError
-except NameError:
-    _StandardError = Exception
+
+_StandardError = Exception
 
 
 class Warning(_StandardError):

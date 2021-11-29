@@ -22,6 +22,9 @@ var/
 /doc/_build/
 /doc/build/
 *.pyc
+debug.py
+*.proto
+polypheny-avatica-tmp/
 
 # core dumps
 core.*

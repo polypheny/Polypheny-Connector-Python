@@ -19,7 +19,7 @@
 import os
 import sys
 
-from setuptools import Extension, setup
+from setuptools import setup
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 CONNECTOR_SRC_DIR = os.path.join(THIS_DIR, "polypheny")
@@ -47,13 +47,14 @@ options_def = {
 # Options is the final parsed command line options
 options = {e.lstrip("-"): False for e in options_def}
 
+
 for flag in options_def:
     if flag in sys.argv:
         options[flag.lstrip("-")] = True
         sys.argv.remove(flag)
 
 def readme():
-    with open('README.md') as f:
+    with open(os.path.join(THIS_DIR, 'README.md'), encoding="utf-8" ) as f:
         return f.read()
 
 
@@ -83,5 +84,6 @@ setup(
     ],
     python_requires=">=3.6",
     install_requires=[
+         'protobuf>=3.0.0',
     ]
 )
