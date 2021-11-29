@@ -72,6 +72,7 @@ Attributes:
             PLATFORM,
         )
 
+        self._cursors = []
 
         # Extract properties to pass to OpenConnectionRequest
         self._connection_args = {}
@@ -85,7 +86,7 @@ Attributes:
         
               
     
-        print("Trying to connect to URL:'" + str(self._client.url) + "'" )
+        logger.debug("Trying to connect to URL:'" + str(self._client.url) + "'" )
         self.open()
 
         auth=HTTPBasicAuth('user', 'pass')
@@ -128,6 +129,9 @@ Attributes:
             cursor = cursor_ref()
             if cursor is not None and not cursor._closed:
                 cursor.close()
+
+        # TODO check for open transactions and then call self.rollback()
+
         self._client.close_connection(self._id)
         self._client.close()
         self._closed = True
@@ -136,13 +140,16 @@ Attributes:
 
     def is_closed(self):
         """Checks whether the connection has been closed."""
-        return self.rest is None
+        return self._closed is None
 
 
 
     def commit(self):
         """Commits the current transaction."""
         self.cursor().execute("COMMIT")
+
+        if self._closed:
+            raise ProgrammingError('the connection is already closed')
 
 
 
@@ -153,9 +160,9 @@ Attributes:
 
 
     def cursor(self, **kwargs):
-        print("Return cursor")
         if self._closed:
             raise ProgrammingError('the connection is already closed')
+
         return PolyphenyCursor(self,**kwargs)
 
 

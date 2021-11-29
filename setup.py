@@ -37,6 +37,7 @@ except Exception:
         exec(f.read())
 version = ".".join([str(v) for v in VERSION if v is not None])
 
+
 # Parse command line flags
 
 # This list defines the options definitions in a set
@@ -52,6 +53,7 @@ for flag in options_def:
     if flag in sys.argv:
         options[flag.lstrip("-")] = True
         sys.argv.remove(flag)
+
 
 def readme():
     with open(os.path.join(THIS_DIR, 'README.md'), encoding="utf-8" ) as f:

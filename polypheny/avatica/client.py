@@ -18,13 +18,12 @@
 """Implementation of the JSON-over-HTTP RPC protocol used by Avatica."""
 
 
-import re
 import socket
 import pprint
 import math
 import logging
 import time
-from polypheny import errors
+from polypheny.errors import *
 from polypheny.avatica.protobuf import requests_pb2, common_pb2, responses_pb2
 
 from html.parser import HTMLParser
@@ -81,9 +80,7 @@ def parse_connection_params(host, port, protocol):
     protocol = protocol.replace('\\', '').replace(':','')
 
     if protocol != "http" and protocol != "https":
-        print("Error: '%s' is not a supported protocol" % ( protocol ))
-        # Todo Raise error
-        exit(1)
+        raise ProgrammingError("Error: '%s' is not a supported protocol" % ( protocol ))
 
     url = _build_connection_string(protocol,host, port)
 
@@ -96,8 +93,6 @@ def parse_connection_params(host, port, protocol):
     return url
 
 
-def _build_connection_string(protocol, host, port):
-    return protocol + '://' + host + ':' + str(port)
 
 
 def parse_error_page(html):
@@ -105,8 +100,8 @@ def parse_error_page(html):
     parser.feed(html)
     if parser.title == ['HTTP ERROR: 500']:
         message = ' '.join(parser.message).strip()
-        print(message)
-        print(message)
+        raise InternalError(message)
+    
 
 
 def parse_error_protobuf(text):
@@ -116,12 +111,12 @@ def parse_error_protobuf(text):
     err = responses_pb2.ErrorResponse()
     err.ParseFromString(message.wrapped_message)
 
-    print("\nERROR:")
-    print(err.error_message)
-    print(err.error_code, err.sql_state, err.error_message)
-    print(err.error_message)
+    raise Error(err.error_code, err.sql_state, err.error_message)
 
 
+
+def _build_connection_string(protocol, host, port):
+    return protocol + '://' + host + ':' + str(port)
 
 
 ####################
@@ -204,7 +199,7 @@ class PolyphenyAvaticaClient(object):
             self.connection.connect()
             
         except (httplib.HTTPException, socket.error) as e:
-            print('Unable to connect to the specified service', e)
+            raise InterfaceError('Unable to connect to the specified service', e)
 
 
 
@@ -217,76 +212,6 @@ class PolyphenyAvaticaClient(object):
             except httplib.HTTPException:
                 logger.warning("Error while closing connection", exc_info=True)
             self.connection = None
-
-
-
-    def _post_request(self, body, headers):
-        retry_count = 2
-        while True:
-            logger.debug("POST %s %r %r", self.url.path, body, headers)
-            try:
-                self.connection.request('POST', self.url.path, body=body, headers=headers)
-                response = self.connection.getresponse()
-
-            # Graceful retry to resume and reestablish session
-            except httplib.HTTPException as e:
-                if retry_count > 0:
-                    delay = math.exp(-retry_count)
-                    logger.debug("HTTP protocol error, will retry in %s seconds...", delay, exc_info=True)
-                    self.close()
-                    self.connect()
-                    time.sleep(delay)
-                    retry_count -= 1
-                    continue
-                print('RPC request failed', cause=e)
-            else:
-                if response.status == httplib.SERVICE_UNAVAILABLE:
-                    if retry_count > 0:
-                        delay = math.exp(-retry_count)
-                        logger.debug("Service unavailable, will retry in %s seconds...", delay, exc_info=True)
-                        time.sleep(delay)
-                        retry_count -= 1
-                        continue
-                return response
-
-
-
-    def _apply(self, request_data, expected_response_type=None):
-        logger.info("Sending request\n%s", pprint.pformat(request_data))
-
-        request_name = request_data.__class__.__name__
-        message = common_pb2.WireMessage()
-        message.name = 'org.apache.calcite.avatica.proto.Requests${}'.format(request_name)
-        message.wrapped_message = request_data.SerializeToString()
-        body = message.SerializeToString()
-        headers = {'content-type': 'application/x-google-protobuf'}
-
-
-        response = self._post_request(body, headers)
-        response_body = response.read()
-
-        if response.status != httplib.OK:
-            logger.info("Received response\n%s", response_body)
-            if b'<html>' in response_body:
-                parse_error_page(response_body)
-            else:
-                # assume the response is in protobuf format
-                parse_error_protobuf(response_body)
-            print('RPC request returned invalid status code', response.status)
-
-        message = common_pb2.WireMessage()
-        message.ParseFromString(response_body)
-
-        logger.debug("Received response\n%s", message)
-
-        if expected_response_type is None:
-            expected_response_type = request_name.replace('Request', 'Response')
-
-        expected_response_type = 'org.apache.calcite.avatica.proto.Responses$' + expected_response_type
-        if message.name != expected_response_type:
-            print('unexpected response type "{}"'.format(message.name))
-
-        return message.wrapped_message
 
 
 
@@ -308,14 +233,15 @@ class PolyphenyAvaticaClient(object):
             for k, v in info.items():
                 request.info[k] = v
 
-        print("REQUEST:" , request)
+        logger.debug("Constructed REQUEST:" , request)
 
         response_data = self._apply(request)
         response = responses_pb2.OpenConnectionResponse()
         response.ParseFromString(response_data)
 
-        print("RESPONSE: " + str(response))
+        logger.debug("RESPONSE: " + str(response))
     
+
 
     def close_connection(self, connection_id):
         """Closes a connection.
@@ -345,6 +271,7 @@ class PolyphenyAvaticaClient(object):
         response_data = self._apply(request)
         response = responses_pb2.CreateStatementResponse()
         response.ParseFromString(response_data)
+
         return response.statement_id
 
 
@@ -363,6 +290,7 @@ class PolyphenyAvaticaClient(object):
         request.statement_id = statement_id
 
         self._apply(request)
+
 
 
     def prepare_and_execute(self, connection_id, statement_id, sql, max_rows_total=None, first_frame_max_size=None):
@@ -392,22 +320,26 @@ class PolyphenyAvaticaClient(object):
         request.sql = sql
         if max_rows_total is not None:
             request.max_rows_total = max_rows_total
+
         if first_frame_max_size is not None:
             request.first_frame_max_size = first_frame_max_size
 
         response_data = self._apply(request, 'ExecuteResponse')
         response = responses_pb2.ExecuteResponse()
         response.ParseFromString(response_data)
+
         return response.results
 
-    def prepare(self, connection_id, sql, max_rows_total=None):
+
+
+    def prepare(self, connection_id, command, max_rows_total=None):
         """Prepares a statement.
 
         :param connection_id:
             ID of the current connection.
 
-        :param sql:
-            SQL query.
+        :param command:
+            Qquery to be prepared SQL,CQL,MQL, etc.
 
         :param max_rows_total:
             The maximum number of rows that will be allowed for this query.
@@ -418,7 +350,7 @@ class PolyphenyAvaticaClient(object):
         
         request = requests_pb2.PrepareRequest()
         request.connection_id = connection_id
-        request.sql = sql
+        request.sql = command
         if max_rows_total is not None:
             request.max_rows_total = max_rows_total
 
@@ -457,9 +389,11 @@ class PolyphenyAvaticaClient(object):
         request.statementHandle.id = statement_id
         request.statementHandle.connection_id = connection_id
         request.statementHandle.signature.CopyFrom(signature)
+
         if parameter_values is not None:
             request.parameter_values.extend(parameter_values)
             request.has_parameter_values = True
+
         if first_frame_max_size is not None:
             request.deprecated_first_frame_max_size = first_frame_max_size
             request.first_frame_max_size = first_frame_max_size
@@ -467,6 +401,7 @@ class PolyphenyAvaticaClient(object):
         response_data = self._apply(request)
         response = responses_pb2.ExecuteResponse()
         response.ParseFromString(response_data)
+
         return response.results
 
 
@@ -496,11 +431,86 @@ class PolyphenyAvaticaClient(object):
         request.connection_id = connection_id
         request.statement_id = statement_id
         request.offset = offset
+
         if frame_max_size is not None:
             request.frame_max_size = frame_max_size
 
         response_data = self._apply(request)
         response = responses_pb2.FetchResponse()
         response.ParseFromString(response_data)
+
         return response.frame
+
+
+
+    def _post_request(self, body, headers):
+        retry_count = 2
+
+        while True:
+            logger.debug("POST %s %r %r", self.url.path, body, headers)
+            try:
+                self.connection.request('POST', self.url.path, body=body, headers=headers)
+                response = self.connection.getresponse()
+
+            # Graceful retry to resume and reestablish session
+            except httplib.HTTPException as e:
+                if retry_count > 0:
+                    delay = math.exp(-retry_count)
+                    logger.debug("HTTP protocol error, will retry in %s seconds...", delay, exc_info=True)
+                    self.close()
+                    self.connect()
+                    time.sleep(delay)
+                    retry_count -= 1
+                    continue
+                raise InterfaceError('RPC request failed', cause=e)
+            else:
+                if response.status == httplib.SERVICE_UNAVAILABLE:
+                    if retry_count > 0:
+                        delay = math.exp(-retry_count)
+                        logger.debug("Service unavailable, will retry in %s seconds...", delay, exc_info=True)
+                        time.sleep(delay)
+                        retry_count -= 1
+                        continue
+                    
+                return response
+
+
+
+    def _apply(self, request_data, expected_response_type=None):
+        logger.debug("Sending request\n%s", pprint.pformat(request_data))
+
+        request_name = request_data.__class__.__name__
+        message = common_pb2.WireMessage()
+        message.name = 'org.apache.calcite.avatica.proto.Requests${}'.format(request_name)
+        message.wrapped_message = request_data.SerializeToString()
+        body = message.SerializeToString()
+        headers = {'content-type': 'application/x-google-protobuf'}
+
+
+        response = self._post_request(body, headers)
+        response_body = response.read()
+
+        if response.status != httplib.OK:
+            logger.info("Received response\n%s", response_body)
+            if b'<html>' in response_body:
+                parse_error_page(response_body)
+            else:
+                # assume the response is in protobuf format
+                parse_error_protobuf(response_body)
+            raise InterfaceError('RPC request returned invalid status code', response.status)
+
+        message = common_pb2.WireMessage()
+        message.ParseFromString(response_body)
+
+        logger.debug("Received response\n%s", message)
+
+        if expected_response_type is None:
+            expected_response_type = request_name.replace('Request', 'Response')
+
+        expected_response_type = 'org.apache.calcite.avatica.proto.Responses$' + expected_response_type
+        if message.name != expected_response_type:
+            raise InterfaceError('unexpected response type "{}"'.format(message.name))
+
+        return message.wrapped_message
+
 

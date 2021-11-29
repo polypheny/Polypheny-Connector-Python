@@ -23,11 +23,14 @@ apilevel = "2.0"
 threadsafety = 1 # Threads may share the module, but not connections.
 paramstyle = "qmark" # Question mark style, e.g. ...WHERE name=?
 
+# TODO allow multiple paramstyles and parse individuallay:
+# See: https://github.com/snowflakedb/snowflake-connector-python/blob/master/src/snowflake/connector/connection.py#L1126
 
-import logging as logger
+
 from polypheny.version import VERSION
 from polypheny.avatica import PolyphenyAvaticaClient
 from polypheny.connection import PolyphenyConnection
+from polypheny.environment import (POLYPHENY_CONNECTOR_VERSION)
 
 
 def Connect(host, port, protocol="http", **kwargs):
@@ -58,7 +61,6 @@ def Connect(host, port, protocol="http", **kwargs):
 
 connect = Connect
 
-POLYPHENY_CONNECTOR_VERSION = ".".join(str(v) for v in VERSION[0:3])
 __version__ = POLYPHENY_CONNECTOR_VERSION
 
 
