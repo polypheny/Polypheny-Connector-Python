@@ -19,7 +19,7 @@
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 CONNECTOR_SRC_DIR = os.path.join(THIS_DIR, "polypheny")
@@ -75,6 +75,7 @@ setup(
         "Issue tracker": "https://github.com/polypheny/Polypheny-DB/labels/A-python",
     },
     license="Apache License, Version 2.0",
+    packages=find_packages(),
     include_package_data=True,
     command_options={
         'build_sphinx': {
