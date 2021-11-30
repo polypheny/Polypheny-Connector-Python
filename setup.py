@@ -63,9 +63,9 @@ def readme():
 setup(
     name="polypheny-connector-python",
     version=version,
-    description="Polypheny connector for Python",
+    description="Polypheny Connector for Python",
     long_description=readme(),
-    author="Polypheny Project",
+    author="The Polypheny Project",
     author_email="mail@polypheny.org",
     url="https://polypheny.org/",
     project_urls={

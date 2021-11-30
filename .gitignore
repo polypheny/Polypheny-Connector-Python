@@ -31,3 +31,5 @@ core.*
 
 # Editor specific
 .vscode
+
+.DS_STORE
