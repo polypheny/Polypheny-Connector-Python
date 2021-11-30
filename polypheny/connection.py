@@ -25,8 +25,6 @@ from polypheny.avatica.client import OPEN_CONNECTION_PROPERTIES
 from polypheny.auth import AuthManager
 from polypheny.environment import (CLIENT_NAME, CLIENT_VERSION,PLATFORM,OPERATING_SYSTEM,POLYPHENY_CONNECTOR_VERSION,PYTHON_VERSION)
 
-import requests
-from requests.auth import HTTPBasicAuth
 from polypheny.errors import *
 
 __all__ = ['Connection']
@@ -88,22 +86,6 @@ Attributes:
     
         logger.debug("Trying to connect to URL:'" + str(self._client.url) + "'" )
         self.open()
-
-        auth=HTTPBasicAuth('user', 'pass')
-        protocol='http'
-
-        #r = requests.get(url, auth=auth)
-        #payload = {"request": "openConnection","connectionId": "000000-0000-0000-00000000"}
-        #json_data = json.dumps(payload)
-        #headers = {'content-type': 'application/json'}
-        
-
-        #r = requests.post(url, data=json_data, headers=headers, auth=auth)
-        #print("Status: " + str(r.status_code))
-        #print("JSON DATA: " + str(r.json))
-        #print("JSON DATA: " + str(r.headers))
-
-       # print(response.read().decode())
 
 
 
