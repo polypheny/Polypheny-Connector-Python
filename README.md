@@ -1,9 +1,7 @@
 
-
 <a href="https://polypheny.org/">
     <img align="right" width="200" height="200" src="https://polypheny.org/community/logo/logo.png" alt="Resume application project app icon">
 </a>
-
 
 
 
@@ -14,14 +12,12 @@ This enables Python programs to access Polypheny databases, using an API that is
 
 ### Installation
 
-Installing the python connector for Polypheny is as simple as calling:
-
+The recommended way to install the Python Connector for Polypheny is via pip:
 ```bash
 pip install polypheny
 ```
 
-Alternativiely if you don't want to install the package directly from [PyPi](https://pypi.org/project/polypheny).
-You can also download the latest [release](https://github.com/polypheny/Polypheny-Connector-Python/releases/), extract the archive and install it manually:
+Alternatively, if you prefer to install the package manually you can also download the latest [release](https://github.com/polypheny/Polypheny-Connector-Python/releases/), extract the archive and install it manually:
 ```bash
 cd /path/to/polyphney-connector-python-x.y.z/
 python setup.py install
@@ -37,25 +33,27 @@ A few examples of the most common functionalities provided by the adapter:
 ```python
 import polypheny
 
-# Connect to server
+# Connect to Polypheny
 connection = polypheny.connect('localhost', 20591, user='pa', password='')
+
 # Get a cursor
 cursor = connection.cursor()
 
-# Create a new Table
+# Create a new table
 cursor.execute("CREATE TABLE dummy (id INT NOT NULL, text VARCHAR(2), num INT, PRIMARY KEY(id))")
 
-# Insert Values into table
+# Insert values into table
 cursor.execute("INSERT INTO dummy VALUES (407 , 'de', 93)")
 
 # Execute a query
 cursor.execute("SELECT * from dummy")
 result = cursor.fetchall()
 
+# Close the connection
 connection.close()
 ```
-An in-depth and more detailed documentation can be found [here]()
 
+An in-depth and more detailed documentation can be found [here]()
 
 
 
