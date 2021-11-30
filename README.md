@@ -71,7 +71,7 @@ Please note that we have a [code of conduct](https://github.com/polypheny/Admin/
 This work was influenced by the following projects:
 
 * [python-phoenixdb](https://github.com/lalinsky/python-phoenixdb)
-* [snowflake-connector-python](https://github.com/lalinsky/python-phoenixdb)
+* [snowflake-connector-python](https://github.com/snowflakedb/snowflake-connector-python)
 
 
 ## License
