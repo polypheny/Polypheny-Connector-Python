@@ -61,7 +61,7 @@ def readme():
 
 
 setup(
-    name="polypheny-connector-python",
+    name="polypheny",
     version=version,
     description="Polypheny Connector for Python",
     long_description=readme(),
