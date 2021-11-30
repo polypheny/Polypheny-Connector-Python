@@ -65,6 +65,7 @@ setup(
     version=version,
     description="Polypheny Connector for Python",
     long_description=readme(),
+    long_description_content_type='text/markdown',
     author="The Polypheny Project",
     author_email="mail@polypheny.org",
     url="https://polypheny.org/",
