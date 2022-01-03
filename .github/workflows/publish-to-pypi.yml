@@ -13,7 +13,6 @@ on:
     types:
       - published
       - released
-      - created
       
 jobs:
   build-n-publish:
@@ -38,4 +37,3 @@ jobs:
       uses: pypa/gh-action-pypi-publish@master
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
-        
