@@ -195,6 +195,7 @@ class TypeHelper(object):
         :raises:
             NotImplementedError
         """
+        # TODO add BsicPolyType to supported classes for parameters
         if klass not in JAVA_CLASSES_MAP:
             raise NotImplementedError('type {} is not supported'.format(klass))
 

@@ -18,6 +18,7 @@
 import logging as logger
 from polypheny.errors import *
 from polypheny.types import TypeHelper
+from polypheny.avatica.protobuf import common_pb2
 
 from typing import (
     Any,
@@ -134,7 +135,6 @@ class PolyphenyCursor:
             results = self._connection._client.prepare_and_execute(
                 self._connection._id, self._id,
                 command, first_frame_max_size=self.itersize)
-            self._process_results(results)
 
         else:
             statement = self._connection._client.prepare(
@@ -146,7 +146,8 @@ class PolyphenyCursor:
                 self._connection._id, self._id,
                 statement.signature, self._transform_parameters(parameters),
                 first_frame_max_size=self.itersize)
-            self._process_results(results)
+
+        self._process_results(results)
 
 
 
@@ -179,6 +180,7 @@ class PolyphenyCursor:
 
         rows = self._frame.rows
         row = self._transform_row(rows[self._pos])
+        #row = rows[self._pos]
         self._pos += 1
 
         if self._pos >= len(rows):
@@ -232,9 +234,10 @@ class PolyphenyCursor:
             dtype = TypeHelper.from_class(column.column_class_name)
             self._column_data_types.append(dtype)
 
-        for parameter in signature.parameters:
+        '''for parameter in signature.parameters:
             dtype = TypeHelper.from_class(parameter.class_name)
             self._parameter_data_types.append(dtype)
+        ''' 
         
 
 
@@ -268,7 +271,6 @@ class PolyphenyCursor:
             if result.own_statement:
                 self._set_id(result.statement_id)
                 
-
             # First Frame is currently skipped due to BUG described in:
             # https://github.com/polypheny/Polypheny-DB/blame/0a51f433440e4e6086c66da19e5f4f85cac1995e/jdbc-interface/src/main/java/org/polypheny/db/jdbc/DbmsMeta.java#L1293
             # Therefore we have to immediately execute another feth operation
@@ -276,8 +278,8 @@ class PolyphenyCursor:
                 frame = result.first_frame
             else:
                 frame = self._connection._client.fetch(
-                self._connection._id, self._id,
-                offset=0, frame_max_size=self.itersize)
+                    self._connection._id, self._id,
+                    offset=0, frame_max_size=self.itersize)
 
             self._set_signature(result.signature if result.HasField('signature') else None)
             self._set_frame(frame)
@@ -318,6 +320,27 @@ class PolyphenyCursor:
         return tmp_row
 
 
+    def _transform_parameters(self, parameters):
+        typed_parameters = []
+        for value, data_type in zip(parameters, self._parameter_data_types):
+            field_name, rep, mutate_to, cast_from = data_type
+            typed_value = common_pb2.TypedValue()
+
+            if value is None:
+                typed_value.null = True
+                typed_value.type = common_pb2.NULL
+            else:
+                typed_value.null = False
+
+                # use the mutator function
+                if mutate_to is not None:
+                    value = mutate_to(value)
+
+                typed_value.type = rep
+                setattr(typed_value, field_name, value)
+
+            typed_parameters.append(typed_value)
+        return typed_parameters
 
     def _set_id(self, id):
         if self._id is not None and self._id != id:

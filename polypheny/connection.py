@@ -18,6 +18,7 @@
 
 
 import uuid
+import weakref
 import logging as logger
 
 from polypheny.cursor import PolyphenyCursor
@@ -48,8 +49,7 @@ class PolyphenyConnection(object):
 
     You should not construct this object manually, use :func:`~polypheny.connect` instead.
 
-
-Attributes:
+    Attributes:
         session_id: The session ID of the connection.
         user: The user name used in the connection.
         host: The host name the connection attempts to connect to.
@@ -145,7 +145,10 @@ Attributes:
         if self._closed:
             raise ProgrammingError('the connection is already closed')
 
-        return PolyphenyCursor(self,**kwargs)
+        cursor = PolyphenyCursor(self,**kwargs)
+        self._cursors.append(weakref.ref(cursor, self._cursors.remove))
+
+        return cursor
 
 
 
