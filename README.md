@@ -1,10 +1,10 @@
 <p align="center">
 <picture>
   <source 
-    srcset="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-transparent.png" 
+    srcset="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-white-text.png" 
     media="(prefers-color-scheme: dark)">
   <a href="https://polypheny.org/">
-    <img align="center" width="300" height="300" src="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-white-text.png">
+    <img align="center" width="300" height="300" src="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-transparent.png">
    </a>
 </picture>
 </p>
