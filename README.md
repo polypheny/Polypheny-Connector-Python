@@ -1,4 +1,4 @@
-<p align="center">
+<!--<p align="center">
 <picture>
   <source 
     srcset="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-white-text.png" 
@@ -8,6 +8,11 @@
    </a>
 </picture>
 </p>
+-->
+
+ <a href="https://polypheny.org/">
+    <img align="center" width="300" height="300" src="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-transparent.png">
+</a>
 
 
 # Polypheny Connector for Python
