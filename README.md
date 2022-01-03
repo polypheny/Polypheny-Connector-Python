@@ -49,6 +49,7 @@ cursor.execute("CREATE TABLE dummy (id INT NOT NULL, text VARCHAR(2), num INT, P
 
 # Insert values into table
 cursor.execute("INSERT INTO dummy VALUES (407 , 'de', 93)")
+connection.commit()
 
 # Execute a query
 cursor.execute("SELECT * from dummy")
