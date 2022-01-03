@@ -128,7 +128,7 @@ class PolyphenyConnection(object):
 
     def commit(self):
         """Commits the current transaction."""
-        self.cursor().execute("COMMIT")
+        self._client.commit(self._id)
 
         if self._closed:
             raise ProgrammingError('the connection is already closed')
@@ -137,7 +137,10 @@ class PolyphenyConnection(object):
 
     def rollback(self):
         """Rolls back the current transaction."""
-        self.cursor().execute("ROLLBACK")
+        self._client.rollback(self._id)
+
+        if self._closed:
+            raise ProgrammingError('the connection is already closed')
 
 
 

@@ -442,6 +442,29 @@ class PolyphenyAvaticaClient(object):
         return response.frame
 
 
+    def commit(self, connection_id):
+        """Commits the current active transaction of a connection
+
+        :param connection_id:
+            ID of the connection to commit.
+        """
+
+        request = requests_pb2.CommitRequest()
+        request.connection_id = connection_id
+        self._apply(request)
+
+
+    def rollback(self, connection_id):
+        """CommRolls back the current active transaction of a connection
+
+        :param connection_id:
+            ID of the connection to rollback.
+        """
+
+        request = requests_pb2.RollbackRequest()
+        request.connection_id = connection_id
+        self._apply(request)
+
 
     def _post_request(self, body, headers):
         retry_count = 2

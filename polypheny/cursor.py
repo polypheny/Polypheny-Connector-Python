@@ -180,7 +180,6 @@ class PolyphenyCursor:
 
         rows = self._frame.rows
         row = self._transform_row(rows[self._pos])
-        #row = rows[self._pos]
         self._pos += 1
 
         if self._pos >= len(rows):
@@ -277,9 +276,15 @@ class PolyphenyCursor:
             if result.HasField('first_frame'):
                 frame = result.first_frame
             else:
-                frame = self._connection._client.fetch(
-                    self._connection._id, self._id,
-                    offset=0, frame_max_size=self.itersize)
+                # Needed for DQL only (SELECT, etc.)
+                if result.HasField('signature'):
+                    frame = self._connection._client.fetch(
+                        self._connection._id, self._id,
+                        offset=0, frame_max_size=self.itersize)
+                
+                # For Non-DQL (DDL,DML,etc.)
+                else:
+                    frame = None
 
             self._set_signature(result.signature if result.HasField('signature') else None)
             self._set_frame(frame)
