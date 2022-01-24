@@ -10,8 +10,8 @@
 </p>
 -->
 
- <a href="https://polypheny.org/">
-    <img align="center" width="300" height="300" src="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-transparent.png">
+<a href="https://polypheny.org/">
+    <img align="right" width="300" height="300" src="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-transparent.png" alt="Resume application project app icon">
 </a>
 
 

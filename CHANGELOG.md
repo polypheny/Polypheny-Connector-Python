@@ -8,7 +8,18 @@ Source code is also available at: https://github.com/polypheny/Polypheny-Connect
 
 # Release Notes
 
+## 0.2.0
+### 24 January 2022
 
+IMPROVEMENTS:
+
+* core: Added initial support for basic operations DQL, DML and DDL as well as transaction handling.
+
+BUG FIXES:
+
+* N/A
+
+ 
 ## 0.0.1
 ### 1 November 2021
 
@@ -21,6 +32,7 @@ BUG FIXES:
 * core: Fixed a deadlock 
 * cli: fixed invalid params
 
+ 
 ## 0.0.0
 ### 31 October 2021
 
