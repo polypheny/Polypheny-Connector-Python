@@ -64,7 +64,7 @@ result = cursor.fetchall()
 connection.close()
 ```
 
-An in-depth and more detailed documentation can be found [here]()
+An in-depth and more detailed documentation can be found [here](https://polypheny.org/documentation/Drivers/PythonConnector/).
 
 
 
