@@ -1,18 +1,10 @@
-<!--<p align="center">
-<picture>
-  <source 
-    srcset="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-white-text.png" 
-    media="(prefers-color-scheme: dark)">
-  <a href="https://polypheny.org/">
-    <img align="center" width="300" height="300" src="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-transparent.png">
-   </a>
-</picture>
-</p>
--->
-
-<a href="https://polypheny.org/">
-    <img align="right" width="300" height="300" src="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-transparent.png" alt="Resume application project app icon">
-</a>
+<p align="center">
+    <a href="https://polypheny.org/">
+        <picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-white-text_cropped.png">
+            <img width='50%' alt="Light: 'Resume application project app icon' Dark: 'Resume application project app icon'" src="https://raw.githubusercontent.com/polypheny/Admin/master/Logo/logo-transparent_cropped.png">
+        </picture>
+    </a>    
+</p> 
 
 
 # Polypheny Connector for Python
