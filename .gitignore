@@ -23,7 +23,7 @@ var/
 /doc/build/
 *.pyc
 debug.py
-*.proto
+#*.proto
 polypheny-avatica-tmp/
 
 # core dumps
@@ -33,3 +33,7 @@ core.*
 .vscode
 
 .DS_STORE
+
+*_pb2_grpc.py
+*_pb2.py
+venv/
