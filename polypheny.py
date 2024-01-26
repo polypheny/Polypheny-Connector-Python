@@ -182,7 +182,6 @@ class ResultCursor:
     def __iter__(self):
         return self
 
-
     def __next__(self):
         assert self.rows is not None
 
@@ -350,7 +349,7 @@ class Cursor:
             self.description.append(
                 (column.column_label, None, None, None, None, column.precision, column.scale, column.is_nullable))
 
-    def execute(self, query, params=None, *, fetch_size=None):  # Really? Fetchsize?
+    def execute(self, query, params=None, *, fetch_size=None):
         if self.con is None:
             raise Error("Cursor is closed")
 
