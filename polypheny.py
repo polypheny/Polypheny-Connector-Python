@@ -5,10 +5,8 @@ import transaction_requests_pb2
 import value_pb2
 import grpc
 import secrets
-import numbers
 
 import datetime
-
 
 apilevel = '2.0'
 threadsafety = 0
@@ -19,29 +17,38 @@ paramstyle = 'qmark'
 class Warning(Exception):
     pass
 
+
 class Error(Exception):
     pass
+
 
 class InterfaceError(Error):
     pass
 
+
 class DatabaseError(Error):
     pass
+
 
 class DataError(DatabaseError):
     pass
 
+
 class OperationalError(DatabaseError):
     pass
+
 
 class IntegrityError(DatabaseError):
     pass
 
+
 class InternalError(DatabaseError):
     pass
 
+
 class ProgrammingError(DatabaseError):
     pass
+
 
 class NotSupportedError(DatabaseError):
     pass
@@ -50,33 +57,42 @@ class NotSupportedError(DatabaseError):
 def Date(year, month, day):
     return datetime.date(year, month, day)
 
+
 def Time(hour, minute, second):
     return datetime.time(hour, minute, second)
+
 
 def Timestamp(year, month, day, hour, minute, second):
     return datetime.datetime(year, month, day, hour, minute, second)
 
+
 # See PEP 249
 import time
 
+
 def DateFromTicks(ticks):
-    return Date(*time.localtime(ticks)[:3]) # TODO: Really local time?
+    return Date(*time.localtime(ticks)[:3])  # TODO: Really local time?
+
 
 def TimeFromTicks(ticks):
     return Time(*time.localtime(ticks)[3:6])
 
+
 def TimestampFromTicks(ticks):
     return Timestamp(*time.localtime(ticks)[:6])
+
 
 def Binary(string):
     return string.encode('UTF-8')
 
 
-#STRING = 1
-#BINARY = 2
-#NUMBER = 3
-#DATETIME = 4
-#ROWID = 5
+# Intentionally omitted, we always give type_code = None, like sqlite3
+# STRING = 1
+# BINARY = 2
+# NUMBER = 3
+# DATETIME = 4
+# ROWID = 5
+
 
 
 class Connection:
@@ -98,24 +114,27 @@ class Connection:
         try:
             resp = self.stub.Connect(req)
         except grpc._channel._InactiveRpcError as e:
-            if 'Connection refused' in e.details(): # Not pretty
+            if 'Connection refused' in e.details():  # Not pretty
                 raise Error('Connection refused') from None
             raise Error(str(e)) from None
 
     def cursor(self):
-        # TODO self.chan is None
+        if self.chan is None:
+            raise ProgrammingError('Connection is closed')
         cur = Cursor(self)
         self.cursors.add(cur)
         return cur
 
     def commit(self):
-        # TODO self.chan is None
+        if self.chan is None:
+            raise ProgrammingError('Connection is closed')
         req = transaction_requests_pb2.CommitRequest()
         self.stub.CommitTransaction(req, metadata=[('clientuuid', self.uuid)])
         # TODO Handle error
 
     def rollback(self):
-        # TODO self.chan is None
+        if self.chan is None:
+            raise ProgrammingError('Connection is closed')
         req = transaction_requests_pb2.RollbackRequest()
         self.stub.RollbackTransaction(req, metadata=[('clientuuid', self.uuid)])
         # TODO Handle error
@@ -129,15 +148,19 @@ class Connection:
     #        pass # Happen when connecting without the database running, because self.chan is not None, but cannot be closed
 
     def close(self):
-        # TODO: self.chan is None
+        if self.chan is None:
+            assert len(self.cursors) == 0
+            return
+        assert self.chan is not None
         self.rollback()
-        for cur in list(self.cursors): # self.cursors is materialized because cur.close modifies it
+        for cur in list(self.cursors):  # self.cursors is materialized because cur.close modifies it
             cur.close()
         assert len(self.cursors) == 0
         req = connection_requests_pb2.DisconnectRequest()
         self.stub.Disconnect(req, metadata=[('clientuuid', self.uuid)])
         self.chan.close()
         self.chan = None
+        self.stub = None
 
 
 class ResultCursor:
@@ -145,18 +168,16 @@ class ResultCursor:
         self.con = con
         self.statement_id = statement_id
         self.frame = frame
-        self.rows = iter(self.frame.relational_frame.rows) # TODO result could be not relational
-
+        self.rows = iter(self.frame.relational_frame.rows)  # TODO result could be not relational
 
     def __del__(self):
         self.close()
 
-
     def close(self):
+        assert self.con.stub != None
         r = statement_requests_pb2.CloseStatementRequest()
         r.statement_id = self.statement_id
         self.con.stub.CloseStatement(r, metadata=[('clientuuid', self.con.uuid)])
-
 
     def __iter__(self):
         return self
@@ -172,32 +193,12 @@ class ResultCursor:
                 raise
             return self.nextframe()
 
-
     def nextframe(self):
         r = statement_requests_pb2.FetchRequest()
         r.statement_id = self.statement_id
         self.frame = self.con.stub.FetchResult(r, metadata=[('clientuuid', self.con.uuid)])
-        self.rows = iter(self.frame.relational_frame.rows) # TODO result must not be relational
-        return next(self.rows) # TODO: What happens if this returns StopIteration, but another frame could be fetched?
-
-
-
-class EmptyResultCursor:
-    def __init__(self):
-        pass
-
-
-    def close(self):
-        pass
-
-
-    def __iter__(self):
-        return self
-
-
-    def __next__(self):
-        raise StopIteration
-
+        self.rows = iter(self.frame.relational_frame.rows)  # TODO result must not be relational
+        return next(self.rows)  # TODO: What happens if this returns StopIteration, but another frame could be fetched?
 
 
 # See ProtoValueDeserializer
@@ -247,7 +248,7 @@ def py2proto(value, v=None):
 
 
 def proto2py(value):
-    name = value.WhichOneof("value") # TODO: should we use the type?
+    name = value.WhichOneof("value")  # TODO: should we use the type?
     assert name is not None
     if name == "boolean":
         return value.boolean.boolean
@@ -258,7 +259,7 @@ def proto2py(value):
     elif name == "binary":
         return value.binary.binary
     elif name == "date":
-        return value.date.date # TODO: Wrong
+        return value.date.date  # TODO: Wrong
     elif name == "double":
         return value.double.double
     elif name == "float":
@@ -275,9 +276,8 @@ def proto2py(value):
         prec = value.big_decimal.precision
 
         i = int.from_bytes(raw, byteorder='big', signed=True)
-        i = i * 10**(-scale)
-        print("BIG DECIMAL")# TODO: DEBUG
-        return round(i, prec) # TODO: Round Up/Down?
+        i = i * 10 ** (-scale)
+        return round(i, prec + 1)  # TODO: Round Up/Down?
     elif name == "interval":
         raise NotImplementedError()
     elif name == "user":
@@ -311,7 +311,6 @@ class Cursor:
         self.result = None
         self.reset()
 
-
     def reset(self):
         if self.result is not None:
             self.result.close()
@@ -320,26 +319,23 @@ class Cursor:
         self.arraysize = 1
         self.result = None
 
-
     #def callproc(self):
     # optional
 
     def __del__(self):
         self.close()
 
-
     def close(self):
         # TODO: Error when already closed?
+        assert self.con is not None or self.result is None
         if self.con is not None:
             if self.result is not None:
                 self.result.close()
             self.con.cursors.remove(self)
             self.con = None
 
-
     def __iter__(self):
         return self
-
 
     def __next__(self):
         n = self.fetchone()
@@ -347,22 +343,20 @@ class Cursor:
             raise StopIteration
         return n
 
-
     def derive_description(self, relframe):
         self.description = []
         for column in relframe.column_meta:
             # TODO: Should we even bother with precision/scale/nullable?
             self.description.append(
-                    (column.column_label, None, None, None, None, column.precision, column.scale, column.is_nullable))
+                (column.column_label, None, None, None, None, column.precision, column.scale, column.is_nullable))
 
-
-    def execute(self, query, params=None, *, fetch_size=None):
+    def execute(self, query, params=None, *, fetch_size=None):  # Really? Fetchsize?
         if self.con is None:
             raise Error("Cursor is closed")
 
         self.reset()
 
-        if params is None: # Unparameterized query
+        if params is None:  # Unparameterized query
             req = statement_requests_pb2.ExecuteUnparameterizedStatementRequest()
             req.language_name = 'sql'
             req.statement = query
@@ -406,19 +400,17 @@ class Cursor:
         else:
             raise Error("Unexpected type for params " + str(type(params)))
 
-
-    def executemany(query, params):
+    def executemany(self, query, params):
         # TODO: Optimize, this is to exercise the execute code more
         for param in params:
             self.execute(query, param)
 
-
     def fetchone(self):
         if self.con is None:
-            raise Error("Cursor is closed")
+            raise ProgrammingError("Cursor is closed")
 
         if self.result is None:
-            return None # TODO: Exception
+            raise ProgrammingError("No statement was yet executed")
 
         try:
             n = next(self.result)
@@ -431,7 +423,6 @@ class Cursor:
 
         return v
 
-
     def fetchmany(self, size=None):
         # TODO: Optimize, this is to exercise the fetch code more
         if size is None:
@@ -440,20 +431,16 @@ class Cursor:
         for _ in range(size):
             row = self.fetchone()
             if row is None:
-                return
+                break
             results.append(row)
         return results
 
-
     def fetchall(self):
-        # TODO: Optimize, this is to exercise the fetch code more
-        if size is None:
-            size = self.arraysize
         results = []
         while True:
             row = self.fetchone()
             if row is None:
-                return
+                break
             results.append(row)
         return results
 
@@ -462,11 +449,10 @@ class Cursor:
     #    pass
 
     def setinputsizes(self, sizes):
-        pass # We are free to do nothing
-
+        pass  # We are free to do nothing
 
     def setoutputsize(self, sizes, column=None):
-        pass # We are free to do nothing
+        pass  # We are free to do nothing
 
 
 def connect(address, port, /, username, password):
