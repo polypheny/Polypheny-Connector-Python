@@ -3,6 +3,8 @@
 import polypheny
 import pytest
 
+from test_helper import con, cur
+
 # PEP: 249
 # Title: Python Database API Specification v2.0
 # Author: Marc-André Lemburg <mal@lemburg.com>
@@ -58,11 +60,6 @@ def test_connection():
     con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
     assert type(con) == polypheny.Connection
     con.close()
-
-@pytest.fixture
-def con():
-    return polypheny.connect('127.0.0.1', 20590, username='pa', password='')
-
 # 
 # 
 # Globals
@@ -336,10 +333,6 @@ def test_cursor(con):
     cur = con.cursor()
     assert type(cur) == polypheny.Cursor
     cur.close()
-
-@pytest.fixture
-def cur(con):
-    return con.cursor()
 
 # 
 # 

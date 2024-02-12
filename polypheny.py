@@ -1,3 +1,6 @@
+import datetime
+from typing import Union, List, Any, Dict
+
 import protointerface_pb2_grpc
 import connection_requests_pb2
 import statement_requests_pb2
@@ -5,8 +8,6 @@ import transaction_requests_pb2
 import value_pb2
 import grpc
 import secrets
-
-import datetime
 
 apilevel = '2.0'
 threadsafety = 0
@@ -94,6 +95,9 @@ def Binary(string):
 # ROWID = 5
 
 
+def filelog(item, msg):
+    return
+
 
 class Connection:
     def __init__(self, address, port, username, password):
@@ -102,6 +106,8 @@ class Connection:
 
         # TODO: default to 20590 when no port is given
         self.chan = grpc.insecure_channel(address + ':' + str(port))
+        self.chan.subscribe(
+            lambda x: filelog(self, x))  # This line, for whatever reason, prevents errors during testing...
         self.stub = protointerface_pb2_grpc.ProtoInterfaceStub(self.chan)
 
         req = connection_requests_pb2.ConnectionRequest()
@@ -139,13 +145,9 @@ class Connection:
         self.stub.RollbackTransaction(req, metadata=[('clientuuid', self.uuid)])
         # TODO Handle error
 
-    #def __del__(self):
-    #    # TODO Thread-safety?
-    #    try:
-    #        if self.chan is not None: # move into close
-    #            self.close()
-    #    except Exception:
-    #        pass # Happen when connecting without the database running, because self.chan is not None, but cannot be closed
+    def __del__(self):
+        # TODO Thread-safety?
+        self.close()
 
     def close(self):
         if self.chan is None:
@@ -169,18 +171,21 @@ class ResultCursor:
         self.statement_id = statement_id
         self.frame = frame
         self.rows = iter(self.frame.relational_frame.rows)  # TODO result could be not relational
+        self.closed = False
 
     def __del__(self):
+        assert self.closed
         self.close()
 
     def close(self):
+        if self.closed:
+            return
         assert self.con.stub != None
         r = statement_requests_pb2.CloseStatementRequest()
         r.statement_id = self.statement_id
         self.con.stub.CloseStatement(r, metadata=[('clientuuid', self.con.uuid)])
-
-    def __iter__(self):
-        return self
+        self.con = None
+        self.closed = True
 
     def __next__(self):
         assert self.rows is not None
@@ -205,40 +210,42 @@ def py2proto(value, v=None):
     if v is None:
         v = value_pb2.ProtoValue()
     if type(value) == bool:
-        #v.type = value_pb2.ProtoValue.ProtoValueType.BOOLEAN
+        # v.type = value_pb2.ProtoValue.ProtoValueType.BOOLEAN
         v.boolean.boolean = value
     elif type(value) == int:
-        if -2**31 <= value <= 2**31-1:
-            #v.type = value_pb2.ProtoValue.ProtoValueType.INTEGER
+        if -2 ** 31 <= value <= 2 ** 31 - 1:
+            # v.type = value_pb2.ProtoValue.ProtoValueType.INTEGER
             v.integer.integer = value
-        elif -2**63 <= value <= 2**63-1:
-            #v.type = value_pb2.ProtoValue.ProtoValueType.LONG
+        elif -2 ** 63 <= value <= 2 ** 63 - 1:
+            # v.type = value_pb2.ProtoValue.ProtoValueType.LONG
             v.long.long = value
         else:
-            #v.type = value_pb2.ProtoValue.ProtoValueType.BIG_DECIMAL
-            v.big_decimal.unscaled_value = value.to_bytes(8, byteorder='big', signed=True) # TODO: Fix length
+            # v.type = value_pb2.ProtoValue.ProtoValueType.BIG_DECIMAL
+            n = ((value.bit_length() - 1) // 8) + 1  # TODO: Does this work for negative numbers?
+            v.big_decimal.unscaled_value = value.to_bytes(n, byteorder='big', signed=True)
             v.big_decimal.scale = 0
             v.big_decimal.precision = 0
+            print(v.big_decimal)
     elif type(value) == bytes:
-        #v.type = value_pb2.ProtoValue.ProtoValueType.BINARY
+        # v.type = value_pb2.ProtoValue.ProtoValueType.BINARY
         v.binary.binary = value
         # TODO: Date
     elif type(value) == float:
-        #v.type = value_pb2.ProtoValue.ProtoValueType.DOUBLE
+        # v.type = value_pb2.ProtoValue.ProtoValueType.DOUBLE
         v.double.double = value
         # TODO: Use BigDecimal as well?
     elif type(value) == str:
-        #v.type = value_pb2.ProtoValue.ProtoValueType.VARCHAR
+        # v.type = value_pb2.ProtoValue.ProtoValueType.VARCHAR
         v.string.string = value
-        # TODO: Time, Time Stamp
-    elif type(value) == None:
-        #v.type = value_pb2.ProtoValue.ProtoValueType.NULL
-        v.null.CopyFrom(value_pb2.ProtoNull)
+        # TODO: Time, Timestamp
+    elif value is None:
+        # v.type = value_pb2.ProtoValue.ProtoValueType.NULL
+        v.null.CopyFrom(value_pb2.ProtoNull())
     elif type(value) == list:
-        #v.type = value_pb2.ProtoValue.ProtoValueType.LIST
+        # v.type = value_pb2.ProtoValue.ProtoValueType.LIST
         for element in value:
             v.list.values.append(py2proto(element))
-    elif type(value) == dict: # experiment to test the server with unset values
+    elif type(value) == dict:  # experiment to test the server with unset values
         pass
     else:
         raise NotImplementedError
@@ -247,7 +254,7 @@ def py2proto(value, v=None):
 
 
 def proto2py(value):
-    name = value.WhichOneof("value")  # TODO: should we use the type?
+    name = value.WhichOneof("value")
     assert name is not None
     if name == "boolean":
         return value.boolean.boolean
@@ -258,7 +265,7 @@ def proto2py(value):
     elif name == "binary":
         return value.binary.binary
     elif name == "date":
-        return value.date.date  # TODO: Wrong
+        raise NotImplementedError()
     elif name == "double":
         return value.double.double
     elif name == "float":
@@ -270,21 +277,27 @@ def proto2py(value):
     elif name == "null":
         return None
     elif name == "big_decimal":
+        print(value)
         raw = value.big_decimal.unscaled_value
         scale = value.big_decimal.scale
         prec = value.big_decimal.precision
 
+        if scale > (2**31) - 1:
+            scale = scale - 2**32
+
         i = int.from_bytes(raw, byteorder='big', signed=True)
+        print(f'i: {i}')
         i = i * 10 ** (-scale)
+        print(f'i: {i} {2**77}')
         return round(i, prec + 1)  # TODO: Round Up/Down?
     elif name == "interval":
         raise NotImplementedError()
-    elif name == "user":
+    elif name == "user_defined_type":
         raise NotImplementedError()
     elif name == "file":
         raise NotImplementedError()
     elif name == "list":
-        raise NotImplementedError()
+        return list(map(lambda v: proto2py(v), value.list.values))
     elif name == "map":
         raise NotImplementedError()
     elif name == "document":
@@ -297,10 +310,9 @@ def proto2py(value):
         raise NotImplementedError()
     elif name == "graph":
         raise NotImplementedError()
-    elif name == "row":
+    elif name == "row_id":
         raise NotImplementedError()
     else:
-        breakpoint() # TODO
         raise RuntimeError("Unhandled value type")
 
 
@@ -318,7 +330,7 @@ class Cursor:
         self.arraysize = 1
         self.result = None
 
-    #def callproc(self):
+    # def callproc(self):
     # optional
 
     def __del__(self):
@@ -330,6 +342,7 @@ class Cursor:
         if self.con is not None:
             if self.result is not None:
                 self.result.close()
+                self.result = None
             self.con.cursors.remove(self)
             self.con = None
 
@@ -349,7 +362,15 @@ class Cursor:
             self.description.append(
                 (column.column_label, None, None, None, None, column.precision, column.scale, column.is_nullable))
 
-    def execute(self, query, params=None, *, fetch_size=None):
+    def execute(self, query: str, params: Union[List[Any], Dict[str, Any]] = None, *, fetch_size: int = None, ddl_hack: bool = False) -> None:
+        """
+        Executes a SQL query.
+
+        @param query:
+        @param params:
+        @param fetch_size:
+        @return:
+        """
         if self.con is None:
             raise Error("Cursor is closed")
 
@@ -362,16 +383,18 @@ class Cursor:
             if fetch_size:
                 req.fetch_size = fetch_size
             resp = self.con.stub.ExecuteUnparameterizedStatement(req, metadata=[('clientuuid', self.con.uuid)])
-            next(resp) # Contains only statement_id
-            r = next(resp)
-            assert r.HasField("result") # Is this always true?
-            #self.rowcount = r.result.scalar # Can this be relied upon?
-            if r.result.HasField("frame"):
+            next(resp)  # Contains only statement_id
+            if ddl_hack:
+                return
+            try:
+                r = next(resp)
+                assert r.HasField("result")  # Is this always true?
+                # self.rowcount = r.result.scalar # Can this be relied upon?
+                assert r.result.HasField("frame")  # Is this always true?
                 self.derive_description(r.result.frame.relational_frame)
                 self.result = ResultCursor(self.con, r.statement_id, r.result.frame)
-            else:
-                #self.result = EmptyResultCursor()
-                self.result = None
+            except Exception as e:
+                print(e)
             return
 
         req = statement_requests_pb2.PrepareStatementRequest()
@@ -444,7 +467,7 @@ class Cursor:
         return results
 
     # optional
-    #def nextset(self):
+    # def nextset(self):
     #    pass
 
     def setinputsizes(self, sizes):
@@ -455,4 +478,6 @@ class Cursor:
 
 
 def connect(address, port, /, username, password):
+    """ Connect to a Polypheny instance
+    """
     return Connection(address, port, username, password)
