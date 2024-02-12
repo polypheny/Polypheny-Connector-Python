@@ -135,7 +135,7 @@ message ProtoTime {
 }
 
 message ProtoTimestamp {
-  int64 time_stamp = 1;
+  int64 timestamp = 1;
 }
 
 message ProtoBigDecimal {
