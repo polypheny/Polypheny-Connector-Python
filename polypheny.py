@@ -3,6 +3,7 @@ from typing import Union, List, Any, Dict
 
 import protointerface_pb2_grpc
 import connection_requests_pb2
+import relational_frame_pb2
 import statement_requests_pb2
 import transaction_requests_pb2
 import value_pb2
@@ -169,9 +170,20 @@ class ResultCursor:
     def __init__(self, con, statement_id, frame):
         self.con = con
         self.statement_id = statement_id
-        self.frame = frame
-        self.rows = iter(self.frame.relational_frame.rows)  # TODO result could be not relational
         self.closed = False
+        self.frame = frame
+        restype = self.frame.WhichOneof('result')
+        if restype is None:
+            # TODO when does this happen?
+            self.closed = True
+            return
+        if restype == 'relational_frame':
+            self.rows = iter(self.frame.relational_frame.rows)  # TODO result could be not relational
+        elif restype == 'document_frame':
+            self.rows = iter(self.frame.document_frame.documents)
+        else:
+            self.closed = True
+            raise NotImplementedError(f'Resultset of type {restype} is not implemented')
 
     def __del__(self):
         assert self.closed
@@ -301,7 +313,13 @@ def proto2py(value):
     elif name == "map":
         raise NotImplementedError()
     elif name == "document":
-        raise NotImplementedError()
+        res = {}
+        for entry in value.document.entries:
+            k = proto2py(entry.key)
+            assert isinstance(k, str)  # TODO: Correct?
+            v = proto2py(entry.value)
+            res[k] = v
+        return res
     elif name == "node":
         raise NotImplementedError()
     elif name == "edge":
@@ -427,6 +445,65 @@ class Cursor:
         for param in params:
             self.execute(query, param)
 
+    def executeany(self, lang: str, query: str, params: Union[List[Any], Dict[str, Any]] = None, *, fetch_size: int = None) -> None:
+        """
+        Executes a query in language lang.
+
+        @param lang:
+        @param query:
+        @param params:
+        @param fetch_size:
+        @return:
+        """
+        if self.con is None:
+            raise Error("Cursor is closed")
+
+        self.reset()
+
+        if params is None:  # Unparameterized query
+            req = statement_requests_pb2.ExecuteUnparameterizedStatementRequest()
+            req.language_name = lang
+            req.statement = query
+            if fetch_size:
+                req.fetch_size = fetch_size
+            resp = self.con.stub.ExecuteUnparameterizedStatement(req, metadata=[('clientuuid', self.con.uuid)])
+            next(resp)  # Contains only statement_id
+            try:
+                r = next(resp)
+                assert r.HasField("result")  # Is this always true?
+                # self.rowcount = r.result.scalar # Can this be relied upon?
+                assert r.result.HasField("frame")  # Is this always true?
+                self.derive_description(r.result.frame.relational_frame)
+                self.result = ResultCursor(self.con, r.statement_id, r.result.frame)
+            except Exception as e:
+                print(e)
+            return
+
+        req = statement_requests_pb2.PrepareStatementRequest()
+        req.language_name = lang
+        req.statement = query
+        if type(params) == list or type(params) == tuple:
+            resp = self.con.stub.PrepareIndexedStatement(req, metadata=[('clientuuid', self.con.uuid)])
+            statement_id = resp.statement_id
+            req = statement_requests_pb2.ExecuteIndexedStatementRequest()
+            req.statement_id = statement_id
+            req.parameters.parameters.extend(list(map(py2proto, params)))
+            resp = self.con.stub.ExecuteIndexedStatement(req, metadata=[('clientuuid', self.con.uuid)])
+            self.derive_description(resp.frame.relational_frame)
+            self.result = ResultCursor(self.con, statement_id, resp.frame)
+        elif type(params) == dict:
+            resp = self.con.stub.PrepareNamedStatement(req, metadata=[('clientuuid', self.con.uuid)])
+            statement_id = resp.statement_id
+            req = statement_requests_pb2.ExecuteNamedStatementRequest()
+            req.statement_id = statement_id
+            for k, v in params.items():
+                py2proto(v, req.parameters.parameters[k])
+            resp = self.con.stub.ExecuteNamedStatement(req, metadata=[('clientuuid', self.con.uuid)])
+            self.derive_description(resp.frame.relational_frame)
+            self.result = ResultCursor(self.con, statement_id, resp.frame)
+        else:
+            raise Error("Unexpected type for params " + str(type(params)))
+            
     def fetchone(self):
         if self.con is None:
             raise ProgrammingError("Cursor is closed")
@@ -439,11 +516,15 @@ class Cursor:
         except StopIteration:
             return None
 
-        v = []
-        for value in n.values:
-            v.append(proto2py(value))
-
-        return v
+        if isinstance(n, relational_frame_pb2.Row):
+            v = []
+            for value in n.values:
+                v.append(proto2py(value))
+            return v
+        elif isinstance(n, value_pb2.ProtoDocument):
+            value = value_pb2.ProtoValue()
+            value.document.CopyFrom(n)
+            return proto2py(value)
 
     def fetchmany(self, size=None):
         # TODO: Optimize, this is to exercise the fetch code more
