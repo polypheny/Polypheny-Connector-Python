@@ -28,3 +28,8 @@ cur.execute('SELECT * FROM emps')
 for f in cur:
 	print(f)
 ```
+
+Run the test with coverage report:
+```
+coverage run --source polypheny -m pytest && coverage report -m
+```
