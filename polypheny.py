@@ -96,10 +96,6 @@ def Binary(string):
 # ROWID = 5
 
 
-def filelog(item, msg):
-    return
-
-
 class Connection:
     def __init__(self, address, port, username, password):
         self.uuid = secrets.token_urlsafe(16)
@@ -107,8 +103,6 @@ class Connection:
 
         # TODO: default to 20590 when no port is given
         self.chan = grpc.insecure_channel(address + ':' + str(port))
-        self.chan.subscribe(
-            lambda x: filelog(self, x))  # This line, for whatever reason, prevents errors during testing...
         self.stub = protointerface_pb2_grpc.ProtoInterfaceStub(self.chan)
 
         req = connection_requests_pb2.ConnectionRequest()
@@ -123,7 +117,10 @@ class Connection:
         except grpc._channel._InactiveRpcError as e:
             if 'Connection refused' in e.details():  # Not pretty
                 raise Error('Connection refused') from None
+            self.chan.close()
+            self.chan = None
             raise Error(str(e)) from None
+
 
     def cursor(self):
         if self.chan is None:
