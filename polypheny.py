@@ -2,13 +2,9 @@ import datetime
 from typing import Union, List, Any, Dict
 import secrets
 
-import protointerface_pb2_grpc
 import connection_requests_pb2
 import relational_frame_pb2
-import statement_requests_pb2
-import transaction_requests_pb2
 import value_pb2
-import grpc
 import rpc
 from exceptions import *
 from serialize import *
@@ -57,12 +53,8 @@ def Binary(string):
 # DATETIME = 4
 # ROWID = 5
 
-POLYPHENY_API_MAJOR = 2
-POLYPHENY_API_MINOR = 0
-
 class Connection:
     def __init__(self, address, port, username, password):
-        self.uuid = secrets.token_urlsafe(16)
         self.cursors = set()
 
         # TODO: default to 20590 when no port is given
@@ -72,16 +64,8 @@ class Connection:
             self.con = None  # Needed so destructor works
             raise Error("Connection refused") from None
 
-
-        req = connection_requests_pb2.ConnectionRequest()
-        req.major_api_version = POLYPHENY_API_MAJOR
-        req.minor_api_version = POLYPHENY_API_MINOR
-        req.username = username
-        req.password = password
-        req.connection_properties.is_auto_commit = False
-        req.client_uuid = self.uuid
         try:
-            resp = self.con.connect(req)
+            resp = self.con.connect(username, password, False)
             if not resp.is_compatible:
                 raise Error(f"Client ({POLYPHENY_API_MAJOR}.{POLYPHENY_API_MINOR}) is incompatible with Server version ({resp.major_api_version}.{resp.minor_api_version})")
         except Exception as e:

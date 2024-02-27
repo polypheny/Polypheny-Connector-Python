@@ -7,6 +7,9 @@ import statement_requests_pb2
 import transaction_requests_pb2
 import connection_requests_pb2
 
+POLYPHENY_API_MAJOR = 2
+POLYPHENY_API_MINOR = 0
+
 class Connection:
     def __init__(self, address, port):
         self.address = address
@@ -61,9 +64,14 @@ class Connection:
         assert response.last
         return response
 
-    def connect(self, req):
+    def connect(self, username, password, auto_commit):
         msg = self.new_request()
-        msg.connection_request.MergeFrom(req)
+        req = msg.connection_request
+        req.username = username
+        req.password = ''
+        req.major_api_version = POLYPHENY_API_MAJOR
+        req.minor_api_version = POLYPHENY_API_MINOR
+        req.connection_properties.is_auto_commit = auto_commit
 
         return self.call(msg).connection_response
 

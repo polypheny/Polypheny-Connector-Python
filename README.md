@@ -13,7 +13,7 @@ pip install -r requirements.txt
 
 Generate the Python code:
 ```
-python -m grpc_tools.protoc -I proto --python_out . --grpc_python_out . proto/*
+python -m grpc_tools.protoc -I proto --python_out . proto/*
 ```
 
 Simple example:
