@@ -14,6 +14,10 @@ from test_helper import con, cur
 #            assert row[0] == 1
 #        time.sleep(0.3)
 
+# tests the con fixture helper works
+def test_conn(con):
+    pass
+
 def test_commit(con):
     cur = con.cursor()
 
@@ -61,4 +65,3 @@ def test_fetch_closed_cursor(cur):
 def test_invalid_creds():
     with pytest.raises(polypheny.Error):
         polypheny.connect('127.0.0.1', 20590, 'unknown', '')
-

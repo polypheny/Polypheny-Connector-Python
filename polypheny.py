@@ -1,5 +1,6 @@
 import datetime
 from typing import Union, List, Any, Dict
+import secrets
 
 import protointerface_pb2_grpc
 import connection_requests_pb2
@@ -8,52 +9,12 @@ import statement_requests_pb2
 import transaction_requests_pb2
 import value_pb2
 import grpc
-import secrets
+import rpc
+from exceptions import *
 
 apilevel = '2.0'
 threadsafety = 0
 paramstyle = 'qmark'
-
-
-# Errors
-class Warning(Exception):
-    pass
-
-
-class Error(Exception):
-    pass
-
-
-class InterfaceError(Error):
-    pass
-
-
-class DatabaseError(Error):
-    pass
-
-
-class DataError(DatabaseError):
-    pass
-
-
-class OperationalError(DatabaseError):
-    pass
-
-
-class IntegrityError(DatabaseError):
-    pass
-
-
-class InternalError(DatabaseError):
-    pass
-
-
-class ProgrammingError(DatabaseError):
-    pass
-
-
-class NotSupportedError(DatabaseError):
-    pass
 
 
 def Date(year, month, day):
@@ -95,6 +56,8 @@ def Binary(string):
 # DATETIME = 4
 # ROWID = 5
 
+POLYPHENY_API_MAJOR = 2
+POLYPHENY_API_MINOR = 0
 
 class Connection:
     def __init__(self, address, port, username, password):
@@ -102,24 +65,28 @@ class Connection:
         self.cursors = set()
 
         # TODO: default to 20590 when no port is given
-        self.chan = grpc.insecure_channel(address + ':' + str(port))
-        self.stub = protointerface_pb2_grpc.ProtoInterfaceStub(self.chan)
+        try:
+            self.con = rpc.Connection(address, port)
+        except ConnectionRefusedError:
+            self.con = None  # Needed so destructor works
+            raise Error("Connection refused") from None
+
 
         req = connection_requests_pb2.ConnectionRequest()
-        req.major_api_version = 2
-        req.minor_api_version = 0
+        req.major_api_version = POLYPHENY_API_MAJOR
+        req.minor_api_version = POLYPHENY_API_MINOR
         req.username = username
         req.password = password
         req.connection_properties.is_auto_commit = False
         req.client_uuid = self.uuid
         try:
-            resp = self.stub.Connect(req)
-        except grpc._channel._InactiveRpcError as e:
-            if 'Connection refused' in e.details():  # Not pretty
-                raise Error('Connection refused') from None
-            self.chan.close()
-            self.chan = None
-            raise Error(str(e)) from None
+            resp = self.con.connect(req)
+            if not resp.is_compatible:
+                raise Error(f"Client ({POLYPHENY_API_MAJOR}.{POLYPHENY_API_MINOR}) is incompatible with Server version ({resp.major_api_version}.{resp.minor_api_version})")
+        except Exception as e:
+            self.con.close()
+            self.con = None
+            raise Error(str(e))
 
 
     def cursor(self):
@@ -137,10 +104,10 @@ class Connection:
         # TODO Handle error
 
     def rollback(self):
-        if self.chan is None:
+        if self.con is None:
             raise ProgrammingError('Connection is closed')
-        req = transaction_requests_pb2.RollbackRequest()
-        self.stub.RollbackTransaction(req, metadata=[('clientuuid', self.uuid)])
+        #req = transaction_requests_pb2.RollbackRequest()
+        #self.stub.RollbackTransaction(req, metadata=[('clientuuid', self.uuid)])
         # TODO Handle error
 
     def __del__(self):
@@ -148,19 +115,17 @@ class Connection:
         self.close()
 
     def close(self):
-        if self.chan is None:
+        if self.con is None:
             assert len(self.cursors) == 0
             return
-        assert self.chan is not None
         self.rollback()
         for cur in list(self.cursors):  # self.cursors is materialized because cur.close modifies it
             cur.close()
         assert len(self.cursors) == 0
         req = connection_requests_pb2.DisconnectRequest()
-        self.stub.Disconnect(req, metadata=[('clientuuid', self.uuid)])
-        self.chan.close()
-        self.chan = None
-        self.stub = None
+        #self.stub.Disconnect(req, metadata=[('clientuuid', self.uuid)])
+        self.con.close()
+        self.con = None
 
 
 class ResultCursor:
