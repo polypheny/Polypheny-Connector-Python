@@ -76,7 +76,7 @@ message Response {
     MetaStringResponse meta_string_functions_response = 9;
     MetaStringResponse meta_sql_functions_response = 10;
     ConnectionResponse connection_response = 11;
-    DisconnectionResponse disconnection_response = 12;
+    DisconnectResponse disconnect_response = 12;
     ClientInfoPropertiesResponse client_info_properties_response = 13;
     StatementResponse statement_response = 14;
     StatementBatchResponse statement_batch_response = 15;
@@ -84,7 +84,8 @@ message Response {
     PreparedStatementSignature prepared_statement_signature = 17;
     Frame frame = 18;
     CommitResponse commit_response = 19;
-    ConnectionPropertiesUpdateResponse connection_properties_update_response = 20;
+    RollbackResponse rollback_response = 20;
+    ConnectionPropertiesUpdateResponse connection_properties_update_response = 21;
   }
 }
 
@@ -110,7 +111,7 @@ service ProtoInterface {
   // Connection related
   rpc Connect(ConnectionRequest) returns (ConnectionResponse) {}
   rpc CheckConnection(ConnectionCheckRequest) returns (ConnectionCheckResponse) {}
-  rpc Disconnect(DisconnectRequest) returns (DisconnectionResponse) {}
+  rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
   rpc GetClientInfoProperties(ClientInfoPropertiesRequest) returns (ClientInfoProperties) {}
   rpc SetClientInfoProperties(ClientInfoProperties) returns (ClientInfoPropertiesResponse) {}
   // Unparameterized statements

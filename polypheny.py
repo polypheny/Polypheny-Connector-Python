@@ -97,18 +97,14 @@ class Connection:
         return cur
 
     def commit(self):
-        if self.chan is None:
+        if self.con is None:
             raise ProgrammingError('Connection is closed')
-        req = transaction_requests_pb2.CommitRequest()
-        self.stub.CommitTransaction(req, metadata=[('clientuuid', self.uuid)])
-        # TODO Handle error
+        self.con.commit()
 
     def rollback(self):
         if self.con is None:
             raise ProgrammingError('Connection is closed')
-        #req = transaction_requests_pb2.RollbackRequest()
-        #self.stub.RollbackTransaction(req, metadata=[('clientuuid', self.uuid)])
-        # TODO Handle error
+        self.con.rollback()
 
     def __del__(self):
         # TODO Thread-safety?
@@ -122,8 +118,6 @@ class Connection:
         for cur in list(self.cursors):  # self.cursors is materialized because cur.close modifies it
             cur.close()
         assert len(self.cursors) == 0
-        req = connection_requests_pb2.DisconnectRequest()
-        #self.stub.Disconnect(req, metadata=[('clientuuid', self.uuid)])
         self.con.close()
         self.con = None
 
