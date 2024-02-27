@@ -1,10 +1,7 @@
 import datetime
 from typing import Union, List, Any, Dict
-import secrets
 
-import connection_requests_pb2
 import relational_frame_pb2
-import value_pb2
 import rpc
 from exceptions import *
 from serialize import *
@@ -67,12 +64,12 @@ class Connection:
         try:
             resp = self.con.connect(username, password, False)
             if not resp.is_compatible:
-                raise Error(f"Client ({POLYPHENY_API_MAJOR}.{POLYPHENY_API_MINOR}) is incompatible with Server version ({resp.major_api_version}.{resp.minor_api_version})")
+                raise Error(
+                    f"Client ({rpc.POLYPHENY_API_MAJOR}.{rpc.POLYPHENY_API_MINOR}) is incompatible with Server version ({resp.major_api_version}.{resp.minor_api_version})")
         except Exception as e:
             self.con.close()
             self.con = None
             raise Error(str(e))
-
 
     def cursor(self):
         if self.con is None:
@@ -138,7 +135,7 @@ class ResultCursor:
     def close(self):
         if self.closed:
             return
-        assert self.con.con != None
+        assert self.con.con is not None
         try:
             self.con.con.close_statement(self.statement_id)
         except Exception:
@@ -157,10 +154,9 @@ class ResultCursor:
             return self.nextframe()
 
     def nextframe(self):
-        self.frame = self.con.con.fetch(self.statement_id, None) # TODO
+        self.frame = self.con.con.fetch(self.statement_id, None)  # TODO
         self.rows = iter(self.frame.relational_frame.rows)  # TODO result must not be relational
         return next(self.rows)  # TODO: What happens if this returns StopIteration, but another frame could be fetched?
-
 
 
 class Cursor:
@@ -225,7 +221,8 @@ class Cursor:
         for param in params:
             self.execute(query, param)
 
-    def executeany(self, lang: str, query: str, params: Union[List[Any], Dict[str, Any]] = None, *, fetch_size: int = None) -> None:
+    def executeany(self, lang: str, query: str, params: Union[List[Any], Dict[str, Any]] = None, *,
+                   fetch_size: int = None) -> None:
         """
         Executes a query in language lang.
 
@@ -245,7 +242,8 @@ class Cursor:
             r = self.con.con.execute_unparameterized_statement(lang, query, fetch_size)
             assert r.HasField("result")  # Is this always true?
             # self.rowcount = r.result.scalar # Can this be relied upon?
-            if r.result.HasField("frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
+            if r.result.HasField(
+                    "frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
                 if r.result.frame.WhichOneof('result') == 'relational_frame':
                     self.derive_description(r.result.frame.relational_frame)
                 self.result = ResultCursor(self.con, r.statement_id, r.result.frame)
@@ -253,7 +251,7 @@ class Cursor:
             resp = self.con.con.prepare_indexed_statement(lang, query)
             statement_id = resp.statement_id
             resp = self.con.con.execute_indexed_statement(statement_id, params, fetch_size)
-            if resp.HasField("frame"): # TODO same as above
+            if resp.HasField("frame"):  # TODO same as above
                 if resp.frame.WhichOneof('result') == 'relational_frame':
                     self.derive_description(resp.frame.relational_frame)
                 self.result = ResultCursor(self.con, statement_id, resp.frame)
@@ -261,14 +259,13 @@ class Cursor:
             resp = self.con.con.prepare_named_statement(lang, query)
             statement_id = resp.statement_id
             resp = self.con.con.execute_named_statement(statement_id, params, fetch_size)
-            if resp.HasField("frame"): # TODO same as above
+            if resp.HasField("frame"):  # TODO same as above
                 if resp.frame.WhichOneof('result') == 'relational_frame':
                     self.derive_description(resp.frame.relational_frame)
                 self.result = ResultCursor(self.con, statement_id, resp.frame)
         else:
             raise Error("Unexpected type for params " + str(type(params)))
 
-            
     def fetchone(self):
         if self.con is None:
             raise ProgrammingError("Cursor is closed")

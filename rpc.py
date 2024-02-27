@@ -10,6 +10,7 @@ import connection_requests_pb2
 POLYPHENY_API_MAJOR = 2
 POLYPHENY_API_MINOR = 0
 
+
 class Connection:
     def __init__(self, address, port):
         self.address = address
@@ -52,8 +53,8 @@ class Connection:
         r.ParseFromString(serialized)
         if r.WhichOneof('type') == 'error_response':
             # TODO: Add to error_response something to decide if this is necessary
-            #self.con.close()
-            #self.con = None
+            # self.con.close()
+            # self.con = None
             raise Error(r.error_response.message)
         return r
 

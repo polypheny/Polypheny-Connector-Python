@@ -1,4 +1,6 @@
 import value_pb2
+
+
 # See ProtoValueDeserializer
 def py2proto(value, v=None):
     if v is None:
@@ -71,18 +73,18 @@ def proto2py(value):
     elif name == "null":
         return None
     elif name == "big_decimal":
-        #print(value)
+        # print(value)
         raw = value.big_decimal.unscaled_value
         scale = value.big_decimal.scale
         prec = value.big_decimal.precision
 
-        if scale > (2**31) - 1:
-            scale = scale - 2**32
+        if scale > (2 ** 31) - 1:
+            scale = scale - 2 ** 32
 
         i = int.from_bytes(raw, byteorder='big', signed=True)
-        #print(f'i: {i}')
+        # print(f'i: {i}')
         i = i * 10 ** (-scale)
-        #print(f'i: {i} {2**77}')
+        # print(f'i: {i} {2**77}')
         return round(i, prec + 1)  # TODO: Round Up/Down?
     elif name == "interval":
         raise NotImplementedError()
@@ -114,4 +116,3 @@ def proto2py(value):
         raise NotImplementedError()
     else:
         raise RuntimeError("Unhandled value type")
-
