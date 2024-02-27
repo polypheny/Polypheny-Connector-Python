@@ -56,6 +56,11 @@ def test_execute_wrongparams(cur):
     with pytest.raises(polypheny.Error):
         cur.execute('SELECT ?', 5)
 
+def test_execute_closed_cursor(cur):
+    with pytest.raises(polypheny.Error):
+        cur.close()
+        cur.executeany('mql', 'db.abc.find()')
+
 def test_fetch_closed_cursor(cur):
     with pytest.raises(polypheny.Error):
         cur.execute('SELECT  1')
@@ -65,3 +70,10 @@ def test_fetch_closed_cursor(cur):
 def test_invalid_creds():
     with pytest.raises(polypheny.Error):
         polypheny.connect('127.0.0.1', 20590, 'unknown', '')
+
+def test_invalid_version():
+    major = polypheny.POLYPHENY_API_MAJOR
+    with pytest.raises(polypheny.Error):
+        polypheny.POLYPHENY_API_MAJOR = 1
+        polypheny.connect('127.0.0.1', 20590, 'pa', '')
+    polypheny.POLYPHENY_API_MAJOR = major

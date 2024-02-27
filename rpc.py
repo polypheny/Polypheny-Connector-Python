@@ -5,6 +5,7 @@ from serialize import *
 import protointerface_pb2
 import statement_requests_pb2
 import transaction_requests_pb2
+import connection_requests_pb2
 
 class Connection:
     def __init__(self, address, port):
@@ -17,8 +18,8 @@ class Connection:
         if self.con is None:
             return
         try:
-            self.con.disconnect()
-        except Exception:
+            self.disconnect()
+        except Exception as e:
             pass
 
         try:
@@ -47,6 +48,9 @@ class Connection:
         r = protointerface_pb2.Response()
         r.ParseFromString(serialized)
         if r.WhichOneof('type') == 'error_response':
+            # TODO: Add to error_response something to decide if this is necessary
+            #self.con.close()
+            #self.con = None
             raise Error(r.error_response.message)
         return r
 
@@ -65,7 +69,7 @@ class Connection:
 
     def disconnect(self):
         msg = self.new_request()
-        req = transaction_requests_pb2.DisconnectRequest()
+        req = connection_requests_pb2.DisconnectRequest()
         msg.disconnect_request.MergeFrom(req)
 
         return self.call(msg).disconnect_response
@@ -81,7 +85,6 @@ class Connection:
         msg = self.new_request()
         req = transaction_requests_pb2.RollbackRequest()
         msg.rollback_request.MergeFrom(req)
-
         return self.call(msg).rollback_response
 
     def execute_unparameterized_statement(self, language_name, statement, fetch_size):

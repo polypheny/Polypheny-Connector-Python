@@ -115,6 +115,7 @@ class Connection:
         if self.con is None:
             assert len(self.cursors) == 0
             return
+
         for cur in list(self.cursors):  # self.cursors is materialized because cur.close modifies it
             cur.close()
         assert len(self.cursors) == 0
@@ -233,40 +234,7 @@ class Cursor:
         @param fetch_size:
         @return:
         """
-        if self.con is None:
-            raise Error("Cursor is closed")
-
-        self.reset()
-
-        if params is None:  # Unparameterized query
-            try:
-                r = self.con.con.execute_unparameterized_statement('sql', query, fetch_size)
-                assert r.HasField("result")  # Is this always true?
-                # self.rowcount = r.result.scalar # Can this be relied upon?
-                if r.result.HasField("frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
-                    self.derive_description(r.result.frame.relational_frame)
-                    self.result = ResultCursor(self.con, r.statement_id, r.result.frame)
-                return
-            except Exception as e:
-                print(e)
-                raise e
-
-        if type(params) == list or type(params) == tuple:
-            resp = self.con.con.prepare_indexed_statement('sql', query)
-            statement_id = resp.statement_id
-            resp = self.con.con.execute_indexed_statement(statement_id, params, fetch_size)
-            if resp.HasField("frame"): # TODO same as above
-                self.derive_description(resp.frame.relational_frame)
-                self.result = ResultCursor(self.con, statement_id, resp.frame)
-        elif type(params) == dict:
-            resp = self.con.con.prepare_named_statement('sql', query)
-            statement_id = resp.statement_id
-            resp = self.con.con.execute_named_statement(statement_id, params, fetch_size)
-            if resp.HasField("frame"): # TODO same as above
-                self.derive_description(resp.frame.relational_frame)
-                self.result = ResultCursor(self.con, statement_id, resp.frame)
-        else:
-            raise Error("Unexpected type for params " + str(type(params)))
+        return self.executeany('sql', query, params, fetch_size=fetch_size)
 
     def executemany(self, query, params):
         # TODO: Optimize, this is to exercise the execute code more
@@ -283,49 +251,39 @@ class Cursor:
         @param fetch_size:
         @return:
         """
+
         if self.con is None:
             raise Error("Cursor is closed")
 
         self.reset()
 
         if params is None:  # Unparameterized query
-            try:
-                r = self.con.con.execute_unparameterized_statement(lang, query, fetch_size)
-                assert r.HasField("result")  # Is this always true?
-                # self.rowcount = r.result.scalar # Can this be relied upon?
-                if r.result.HasField("frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
+            r = self.con.con.execute_unparameterized_statement(lang, query, fetch_size)
+            assert r.HasField("result")  # Is this always true?
+            # self.rowcount = r.result.scalar # Can this be relied upon?
+            if r.result.HasField("frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
+                if r.result.frame.WhichOneof('result') == 'relational_frame':
                     self.derive_description(r.result.frame.relational_frame)
-                    self.result = ResultCursor(self.con, r.statement_id, r.result.frame)
-            except Exception as e:
-                print(e)
-            return
-
-        req = statement_requests_pb2.PrepareStatementRequest()
-        req.language_name = lang
-        req.statement = query
-        if type(params) == list or type(params) == tuple:
-            resp = self.con.stub.PrepareIndexedStatement(req, metadata=[('clientuuid', self.con.uuid)])
+                self.result = ResultCursor(self.con, r.statement_id, r.result.frame)
+        elif type(params) == list or type(params) == tuple:
+            resp = self.con.con.prepare_indexed_statement(lang, query)
             statement_id = resp.statement_id
-            req = statement_requests_pb2.ExecuteIndexedStatementRequest()
-            req.statement_id = statement_id
-            req.parameters.parameters.extend(list(map(py2proto, params)))
-            resp = self.con.stub.ExecuteIndexedStatement(req, metadata=[('clientuuid', self.con.uuid)])
-            if r.result.HasField("frame"): # TODO same as above
-                self.derive_description(resp.frame.relational_frame)
+            resp = self.con.con.execute_indexed_statement(statement_id, params, fetch_size)
+            if resp.HasField("frame"): # TODO same as above
+                if resp.frame.WhichOneof('result') == 'relational_frame':
+                    self.derive_description(resp.frame.relational_frame)
                 self.result = ResultCursor(self.con, statement_id, resp.frame)
         elif type(params) == dict:
-            resp = self.con.stub.PrepareNamedStatement(req, metadata=[('clientuuid', self.con.uuid)])
+            resp = self.con.con.prepare_named_statement(lang, query)
             statement_id = resp.statement_id
-            req = statement_requests_pb2.ExecuteNamedStatementRequest()
-            req.statement_id = statement_id
-            for k, v in params.items():
-                py2proto(v, req.parameters.parameters[k])
-            resp = self.con.stub.ExecuteNamedStatement(req, metadata=[('clientuuid', self.con.uuid)])
-            if r.result.HasField("frame"): # TODO same as above
-                self.derive_description(resp.frame.relational_frame)
+            resp = self.con.con.execute_named_statement(statement_id, params, fetch_size)
+            if resp.HasField("frame"): # TODO same as above
+                if resp.frame.WhichOneof('result') == 'relational_frame':
+                    self.derive_description(resp.frame.relational_frame)
                 self.result = ResultCursor(self.con, statement_id, resp.frame)
         else:
             raise Error("Unexpected type for params " + str(type(params)))
+
             
     def fetchone(self):
         if self.con is None:
