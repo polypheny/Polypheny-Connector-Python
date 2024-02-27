@@ -6,8 +6,8 @@ from test_helper import con, cur
 
 def test_getstar(con):
     cur = con.cursor()
-    cur.execute('DROP TABLE IF EXISTS t', ddl_hack=True)
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a INTEGER NOT NULL, PRIMARY KEY(i))', ddl_hack=True)
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a INTEGER NOT NULL, PRIMARY KEY(i))')
     cur.executemany('INSERT INTO t(i, a) VALUES (?, ?)', [(0, 1), (1, 2), (2, 3)])
     con.commit()
     cur.executeany('mongo', 'db.t.find()')

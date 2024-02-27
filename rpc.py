@@ -1,7 +1,9 @@
 import socket
 
 from exceptions import *
+from serialize import *
 import protointerface_pb2
+import statement_requests_pb2
 import transaction_requests_pb2
 
 class Connection:
@@ -81,3 +83,63 @@ class Connection:
         msg.rollback_request.MergeFrom(req)
 
         return self.call(msg).rollback_response
+
+    def execute_unparameterized_statement(self, language_name, statement, fetch_size):
+        msg = self.new_request()
+        req = statement_requests_pb2.ExecuteUnparameterizedStatementRequest()
+        req.language_name = language_name
+        req.statement = statement
+        if fetch_size:
+            req.fetch_size = fetch_size
+
+        msg.execute_unparameterized_statement_request.MergeFrom(req)
+
+        self.send_msg(msg)
+        self.recv_msg()
+        r = self.recv_msg()
+        assert r.id == msg.id
+        assert r.last
+        return r.statement_response
+
+    def prepare_indexed_statement(self, language_name, statement):
+        msg = self.new_request()
+        req = msg.prepare_indexed_statement_request
+        req.language_name = language_name
+        req.statement = statement
+        return self.call(msg).prepared_statement_signature
+
+    def execute_indexed_statement(self, statement_id, params, fetch_size):
+        msg = self.new_request()
+        req = msg.execute_indexed_statement_request
+        req.statement_id = statement_id
+        req.parameters.parameters.extend(list(map(py2proto, params)))
+        return self.call(msg).statement_result
+
+    def prepare_named_statement(self, language_name, statement):
+        msg = self.new_request()
+        req = msg.prepare_named_statement_request
+        req.language_name = language_name
+        req.statement = statement
+        return self.call(msg).prepared_statement_signature
+
+    def execute_named_statement(self, statement_id, params, fetch_size):
+        msg = self.new_request()
+        req = msg.execute_named_statement_request
+        req.statement_id = statement_id
+        for k, v in params.items():
+            py2proto(v, req.parameters.parameters[k])
+        return self.call(msg).statement_result
+
+    def fetch(self, statement_id, fetch_size):
+        msg = self.new_request()
+        req = msg.fetch_request
+        req.statement_id = statement_id
+        if fetch_size:
+            req.fetch_size = fetch_size
+
+        return self.call(msg).frame
+
+    def close_statement(self, statement_id):
+        msg = self.new_request()
+        msg.close_statement_request.statement_id = statement_id
+        return self.call(msg).close_statement_response
