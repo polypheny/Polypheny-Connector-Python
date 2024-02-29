@@ -110,18 +110,19 @@ class Connection:
 
 
 class ResultCursor:
-    def __init__(self, con, statement_id, frame):
+    def __init__(self, con, statement_id, frame, fetch_size):
         self.con = con
         self.statement_id = statement_id
         self.closed = False
         self.frame = frame
+        self.fetch_size = fetch_size
         restype = self.frame.WhichOneof('result')
         if restype is None:
             # TODO does this happen?
             self.closed = True
             return
         if restype == 'relational_frame':
-            self.rows = iter(self.frame.relational_frame.rows)  # TODO result could be not relational
+            self.rows = iter(self.frame.relational_frame.rows)
         elif restype == 'document_frame':
             self.rows = iter(self.frame.document_frame.documents)
         else:
@@ -154,7 +155,7 @@ class ResultCursor:
             return self.nextframe()
 
     def nextframe(self):
-        self.frame = self.con.con.fetch(self.statement_id, None)  # TODO
+        self.frame = self.con.con.fetch(self.statement_id, self.fetch_size)
         self.rows = iter(self.frame.relational_frame.rows)  # TODO result must not be relational
         return next(self.rows)  # TODO: What happens if this returns StopIteration, but another frame could be fetched?
 
@@ -246,7 +247,7 @@ class Cursor:
                     "frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
                 if r.result.frame.WhichOneof('result') == 'relational_frame':
                     self.derive_description(r.result.frame.relational_frame)
-                self.result = ResultCursor(self.con, r.statement_id, r.result.frame)
+                self.result = ResultCursor(self.con, r.statement_id, r.result.frame, fetch_size)
         elif type(params) == list or type(params) == tuple:
             resp = self.con.con.prepare_indexed_statement(lang, query)
             statement_id = resp.statement_id
@@ -254,7 +255,7 @@ class Cursor:
             if resp.HasField("frame"):  # TODO same as above
                 if resp.frame.WhichOneof('result') == 'relational_frame':
                     self.derive_description(resp.frame.relational_frame)
-                self.result = ResultCursor(self.con, statement_id, resp.frame)
+                self.result = ResultCursor(self.con, statement_id, resp.frame, fetch_size)
         elif type(params) == dict:
             resp = self.con.con.prepare_named_statement(lang, query)
             statement_id = resp.statement_id
@@ -262,7 +263,7 @@ class Cursor:
             if resp.HasField("frame"):  # TODO same as above
                 if resp.frame.WhichOneof('result') == 'relational_frame':
                     self.derive_description(resp.frame.relational_frame)
-                self.result = ResultCursor(self.con, statement_id, resp.frame)
+                self.result = ResultCursor(self.con, statement_id, resp.frame, fetch_size)
         else:
             raise Error("Unexpected type for params " + str(type(params)))
 
