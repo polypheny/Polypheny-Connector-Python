@@ -21,20 +21,37 @@ def test_conn(con):
 def test_commit(con):
     cur = con.cursor()
 
-    cur.execute('SELECT COUNT(*) FROM emp')
-    
-    cur.fetchone()
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
+    cur.execute('INSERT INTO t(id, a) VALUES (1, 2)')
     con.commit()
-    cur.fetchone()
 
-def test_commit_size(con):
+    cur.execute('SELECT a FROM t')
+    assert cur.fetchone()[0] == 2
+
+def test_rollback(con):
     cur = con.cursor()
 
-    cur.execute('SELECT COUNT(*) FROM emp', fetch_size=1)
-    
-    cur.fetchone()
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
+    cur.execute('INSERT INTO t(id, a) VALUES (1, 2)')
+    con.rollback()
+
+    cur.execute('SELECT a FROM t')
+    assert cur.fetchone() is None
+
+def test_fetch_size(con):
+    cur = con.cursor()
+
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
+    for i in range(30):
+        cur.execute('INSERT INTO t(id, a) VALUES (?, ?)', (i, i))
     con.commit()
-    cur.fetchone()
+
+    for i in (1, 5, 30, 60):
+        cur.execute('SELECT id, a FROM t', fetch_size=i)
+        assert len(cur.fetchall()) == 30
 
 def test_error_on_closed_con(con):
     con.close()
