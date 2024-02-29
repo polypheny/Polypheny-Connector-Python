@@ -53,6 +53,13 @@ def test_fetch_size(con):
         cur.execute('SELECT id, a FROM t', fetch_size=i)
         assert len(cur.fetchall()) == 30
 
+def test_fetch_insert(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
+    cur.execute('INSERT INTO t(id, a) VALUES (1, 1)')
+    with pytest.raises(polypheny.Error):
+        cur.fetchone()
+
 def test_error_on_closed_con(con):
     con.close()
     with pytest.raises(polypheny.ProgrammingError):

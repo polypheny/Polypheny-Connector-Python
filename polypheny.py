@@ -116,18 +116,17 @@ class ResultCursor:
         self.closed = False
         self.frame = frame
         self.fetch_size = fetch_size
-        restype = self.frame.WhichOneof('result')
-        if restype is None:
-            # TODO does this happen?
-            self.closed = True
-            return
-        if restype == 'relational_frame':
-            self.rows = iter(self.frame.relational_frame.rows)
-        elif restype == 'document_frame':
-            self.rows = iter(self.frame.document_frame.documents)
-        else:
-            self.closed = True
-            raise NotImplementedError(f'Resultset of type {restype} is not implemented')
+        if frame is not None:
+            restype = self.frame.WhichOneof('result')
+            if restype is None:
+                assert restype is not None
+            if restype == 'relational_frame':
+                self.rows = iter(self.frame.relational_frame.rows)
+            elif restype == 'document_frame':
+                self.rows = iter(self.frame.document_frame.documents)
+            else:
+                self.closed = True
+                raise NotImplementedError(f'Resultset of type {restype} is not implemented')
 
     def __del__(self):
         assert self.closed
@@ -145,6 +144,10 @@ class ResultCursor:
         self.closed = True
 
     def __next__(self):
+        # frame is None when there where no results
+        if self.frame is None:
+            raise Error("Previous statement did not produce any results")
+
         assert self.rows is not None
 
         try:
@@ -242,30 +245,31 @@ class Cursor:
         if params is None:  # Unparameterized query
             r = self.con.con.execute_unparameterized_statement(lang, query, fetch_size)
             assert r.HasField("result")  # Is this always true?
-            # self.rowcount = r.result.scalar # Can this be relied upon?
-            if r.result.HasField(
-                    "frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
-                if r.result.frame.WhichOneof('result') == 'relational_frame':
-                    self.derive_description(r.result.frame.relational_frame)
-                self.result = ResultCursor(self.con, r.statement_id, r.result.frame, fetch_size)
+            statement_id = r.statement_id
+            result = r.result
         elif type(params) == list or type(params) == tuple:
             resp = self.con.con.prepare_indexed_statement(lang, query)
             statement_id = resp.statement_id
-            resp = self.con.con.execute_indexed_statement(statement_id, params, fetch_size)
-            if resp.HasField("frame"):  # TODO same as above
-                if resp.frame.WhichOneof('result') == 'relational_frame':
-                    self.derive_description(resp.frame.relational_frame)
-                self.result = ResultCursor(self.con, statement_id, resp.frame, fetch_size)
+            result = self.con.con.execute_indexed_statement(statement_id, params, fetch_size)
         elif type(params) == dict:
             resp = self.con.con.prepare_named_statement(lang, query)
             statement_id = resp.statement_id
-            resp = self.con.con.execute_named_statement(statement_id, params, fetch_size)
-            if resp.HasField("frame"):  # TODO same as above
-                if resp.frame.WhichOneof('result') == 'relational_frame':
-                    self.derive_description(resp.frame.relational_frame)
-                self.result = ResultCursor(self.con, statement_id, resp.frame, fetch_size)
+            result = self.con.con.execute_named_statement(statement_id, params, fetch_size)
         else:
             raise Error("Unexpected type for params " + str(type(params)))
+
+        if result.HasField(
+                "frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
+            self.rowcount = -1
+            if result.frame.WhichOneof('result') == 'relational_frame':
+                self.derive_description(result.frame.relational_frame)
+            frame = result.frame
+        else:
+            self.rowcount = result.scalar
+            frame = None
+
+        self.result = ResultCursor(self.con, statement_id, frame, fetch_size)
+
 
     def fetchone(self):
         if self.con is None:
@@ -288,6 +292,8 @@ class Cursor:
             value = value_pb2.ProtoValue()
             value.document.CopyFrom(n)
             return proto2py(value)
+        else:
+            raise Error(f"Unknown result of type {type(n)}")
 
     def fetchmany(self, size=None):
         # TODO: Optimize, this is to exercise the fetch code more
