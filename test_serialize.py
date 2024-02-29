@@ -133,9 +133,9 @@ def test_serialize_varbinary(cur):
 
 def test_insert_double(cur):
     pytest.skip('Fails with HSQLDB exception')
-    cur.execute('DROP TABLE IF EXISTS abc')
-    cur.execute('CREATE TABLE abc(id INTEGER PRIMARY KEY, a INTEGER)')
-    cur.execute('INSERT INTO abc(id, a) VALUES (1, 2), (?, ?)', (2, 3))
-    cur.execute('SELECT id, a FROM abc ORDER BY id')
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
+    cur.execute('INSERT INTO t(id, a) VALUES (1, 2), (?, ?)', (2, 3))
+    cur.execute('SELECT id, a FROM t ORDER BY id')
     assert cur.fetchone() == [1, 2]
     assert cur.fetchone() == [2, 3]
