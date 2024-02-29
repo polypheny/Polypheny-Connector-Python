@@ -118,8 +118,7 @@ class ResultCursor:
         self.fetch_size = fetch_size
         if frame is not None:
             restype = self.frame.WhichOneof('result')
-            if restype is None:
-                assert restype is not None
+            assert restype is not None
             if restype == 'relational_frame':
                 self.rows = iter(self.frame.relational_frame.rows)
             elif restype == 'document_frame':
