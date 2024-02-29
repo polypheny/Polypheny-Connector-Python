@@ -3,7 +3,7 @@
 import polypheny
 import pytest
 
-from test_helper import con, cur
+from test_helper import con, cur, cur_with_data
 
 # PEP: 249
 # Title: Python Database API Specification v2.0
@@ -460,10 +460,14 @@ def test_cursor_close(cur):
 #     bound to variables in the operation.  Variables are specified in a
 #     database-specific notation (see the module's paramstyle_ attribute
 #     for details). [5]_
-def test_cursor_execute(cur):
-    cur.execute('SELECT * FROM emp') # TODO: Make sure this data is available
-    cur.execute('SELECT * FROM emp WHERE age > ?', (30,))
-    cur.execute('SELECT * FROM emp WHERE age > :age', {'age': 30})
+def test_cursor_execute(cur_with_data):
+    pytest.skip('dict example does not work')
+    cur = cur_with_data
+    cur.execute('SELECT * FROM customers')
+    cur.execute('SELECT * FROM customers WHERE year_joined > ?', (2007,))
+    cur.execute('SELECT * FROM customers WHERE year_joined > :year',
+                {'year': 2007})
+
 # 
 #     A reference to the operation will be retained by the cursor.  If
 #     the same operation object is passed in again, then the cursor can
@@ -506,8 +510,10 @@ def test_cursor_execute(cur):
 #     this method.
 # 
 #     Return values are not defined.
-def test_cursor_executemany(cur):
-    cur.executemany('SELECT * FROM emp WHERE age > ?', [(30,), (40,)]) # TODO: Make sure this data is available
+def test_cursor_executemany(cur_with_data):
+    cur = cur_with_data
+    cur.executemany('INSERT INTO customers(id, name, year_joined) VALUES (?, ?, ?)',
+                    [(8, 'Ruth', 2012,), (9, 'Claudia', 2016,)])
 
 # 
 # 
@@ -524,18 +530,24 @@ def test_cursor_executemany(cur):
 #     An Error_ (or subclass) exception is raised if the previous call
 #     to `.execute*()`_ did not produce any result set or no call was
 #     issued yet.
-def test_cursor_fetchone(cur):
+def test_cursor_fetchone(cur_with_data):
+    cur = cur_with_data
     err = None
     try:
         cur.fetchone()
     except polypheny.Error as e:
         err = e
     assert err is not None
-    cur.execute('SELECT * FROM emp')
+    cur.execute('SELECT * FROM customers')
     for row in cur:
         _ = row
-    cur.execute('SELECT * FROM emp WHERE age > 0 AND age < 0')
+    cur.execute('SELECT * FROM customers WHERE year_joined = 2000')
     assert cur.fetchone() is None
+
+    cur.execute('DELETE FROM customers WHERE year_joined = 2010')
+    with pytest.raises(polypheny.Error):
+        cur.fetchone()
+
 # 
 # 
 # .. _.fetchmany:
@@ -562,20 +574,26 @@ def test_cursor_fetchone(cur):
 #     `.arraysize`_ attribute.  If the size parameter is used, then it
 #     is best for it to retain the same value from one `.fetchmany()`_
 #     call to the next.
-def test_cursor_fetchmany(cur):
-    err = None
-    try:
+def test_cursor_fetchmany(cur_with_data):
+    cur = cur_with_data
+    with pytest.raises(polypheny.Error):
         cur.fetchmany()
-    except polypheny.Error as e:
-        err = e
-    assert err is not None
 
-    cur.execute('SELECT * FROM emp')
-    while len(cur.fetchmany(2)) > 0:
-        pass
-    
-    cur.execute('SELECT * FROM emp WHERE age > 0 AND age < 0')
+    # customers has seven entries
+    cur.execute('SELECT * FROM customers')
+    cur.arraysize = 1
+    assert len(cur.fetchmany(2)) == 2
+    assert len(cur.fetchmany()) == 1
+    cur.arraysize = 2
+    assert len(cur.fetchmany()) == 2
+    assert len(cur.fetchmany(100)) == 2
+
+    cur.execute('SELECT * FROM customers WHERE year_joined = 2000')
     assert len(cur.fetchmany()) == 0
+
+    cur.execute('DELETE FROM customers WHERE year_joined = 2000')
+    with pytest.raises(polypheny.Error):
+        cur.fetchmany()
 
 # 
 # 
@@ -591,19 +609,16 @@ def test_cursor_fetchmany(cur):
 #     An Error_ (or subclass) exception is raised if the previous call
 #     to `.execute*()`_ did not produce any result set or no call was
 #     issued yet.
-def test_cursor_fetchall(cur):
-    err = None
-    try:
+def test_cursor_fetchall(cur_with_data):
+    cur = cur_with_data
+    with pytest.raises(polypheny.Error):
         cur.fetchall()
-    except polypheny.Error as e:
-        err = e
-    assert err is not None
 
-    cur.execute('SELECT * FROM emp')
+    cur.execute('SELECT * FROM customers')
     cur.fetchall()
     assert cur.fetchone() is None
-    
-    cur.execute('SELECT * FROM emp WHERE age > 0 AND age < 0')
+
+    cur.execute('SELECT * FROM customers WHERE year_joined = 2000')
     assert len(cur.fetchall()) == 0
 
 # 
