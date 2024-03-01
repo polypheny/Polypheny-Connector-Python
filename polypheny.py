@@ -67,7 +67,9 @@ class Connection:
                 raise Error(
                     f"Client ({rpc.POLYPHENY_API_MAJOR}.{rpc.POLYPHENY_API_MINOR}) is incompatible with Server version ({resp.major_api_version}.{resp.minor_api_version})")
         except Exception as e:
-            self.con.close()
+            # This manual dance prevents the disconnect message from being sent
+            self.con.con.close()
+            self.con.con = None
             self.con = None
             raise Error(str(e))
 
