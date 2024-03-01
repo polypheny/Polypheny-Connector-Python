@@ -545,6 +545,7 @@ def test_cursor_fetchone(cur_with_data):
     assert cur.fetchone() is None
 
     cur.execute('DELETE FROM customers WHERE year_joined = 2010')
+    assert cur.rowcount == 1
     with pytest.raises(polypheny.Error):
         cur.fetchone()
 
@@ -591,7 +592,8 @@ def test_cursor_fetchmany(cur_with_data):
     cur.execute('SELECT * FROM customers WHERE year_joined = 2000')
     assert len(cur.fetchmany()) == 0
 
-    cur.execute('DELETE FROM customers WHERE year_joined = 2000')
+    cur.execute('DELETE FROM customers WHERE year_joined = 2010')
+    assert cur.rowcount == 1
     with pytest.raises(polypheny.Error):
         cur.fetchmany()
 
