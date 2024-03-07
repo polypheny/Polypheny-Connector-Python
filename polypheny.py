@@ -51,13 +51,13 @@ def Binary(string):
 # ROWID = 5
 
 class Connection:
-    def __init__(self, address, port, username, password):
+    def __init__(self, address, port, username, password, transport):
         self.cursors = set()
         self.con = None  # Needed so destructor works
 
         # TODO: default to 20590 when no port is given
         try:
-            self.con = rpc.Connection(address, port)
+            self.con = rpc.Connection(address, port, transport)
         except ConnectionRefusedError:
             raise Error("Connection refused") from None
 
@@ -328,7 +328,7 @@ class Cursor:
         pass  # We are free to do nothing
 
 
-def connect(address, port, /, username, password):
+def connect(address, port, /, username, password, transport=None):
     """ Connect to a Polypheny instance
     """
-    return Connection(address, port, username, password)
+    return Connection(address, port, username, password, transport)

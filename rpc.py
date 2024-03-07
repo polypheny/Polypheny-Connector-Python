@@ -11,11 +11,37 @@ POLYPHENY_API_MAJOR = 2
 POLYPHENY_API_MINOR = 0
 
 
-class Connection:
+class PlainTransport:
     def __init__(self, address, port):
         self.address = address
         self.port = port
         self.con = socket.create_connection((address, port))
+
+    def send_msg(self, serialized):
+        n = len(serialized)
+        bl = n.to_bytes(length=8, byteorder='little')
+        self.con.sendall(bl)
+        self.con.sendall(serialized)
+
+    def recv_msg(self):
+        bl = self.con.recv(8)
+        n = int.from_bytes(bl, 'little')
+        raw = self.con.recv(n)
+        if len(raw) != n:
+            raise EOFError
+        return raw
+
+    def close(self):
+        if self.con is not None:
+            self.con.close()
+            self.con = None
+
+class Connection:
+    def __init__(self, address, port, transport):
+        if transport is None or transport == "plain":
+            self.con = PlainTransport(address, port)
+        else:
+            raise Exception("Unknown transport: " + transport)
         self.id = 1
 
     def close(self):
@@ -39,18 +65,11 @@ class Connection:
         return msg
 
     def send_msg(self, msg):
-        serialized = msg.SerializeToString()
-        n = len(serialized)
-        bl = n.to_bytes(length=8, byteorder='little')
-        self.con.sendall(bl)
-        self.con.sendall(serialized)
+        self.con.send_msg(msg.SerializeToString())
 
     def recv_msg(self):
-        bl = self.con.recv(8)
-        n = int.from_bytes(bl, 'little')
-        serialized = self.con.recv(n)
         r = protointerface_pb2.Response()
-        r.ParseFromString(serialized)
+        r.ParseFromString(self.con.recv_msg())
         if r.WhichOneof('type') == 'error_response':
             # TODO: Add to error_response something to decide if this is necessary
             # self.con.close()
