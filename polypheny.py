@@ -53,12 +53,12 @@ def Binary(string):
 class Connection:
     def __init__(self, address, port, username, password):
         self.cursors = set()
+        self.con = None  # Needed so destructor works
 
         # TODO: default to 20590 when no port is given
         try:
             self.con = rpc.Connection(address, port)
         except ConnectionRefusedError:
-            self.con = None  # Needed so destructor works
             raise Error("Connection refused") from None
 
         try:
