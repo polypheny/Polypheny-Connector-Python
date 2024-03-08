@@ -1,4 +1,6 @@
+import datetime
 import math
+
 import polypheny
 import pytest
 
@@ -47,12 +49,45 @@ def test_serialize_binary(cur):
     assert cur.fetchone()[0] == b'Hello World'
     assert cur.fetchone() is None
 
+def test_serialize_date(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DATE NOT NULL, PRIMARY KEY(i))')
+    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (datetime.date(2024, 3, 8),))
+    cur.execute('SELECT a FROM t')
+    assert cur.fetchone()[0] == datetime.date(2024, 3, 8)
+    assert cur.fetchone() is None
+
 def test_serialize_float(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DOUBLE NOT NULL, PRIMARY KEY(i))')
     cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (2.71,))
     cur.execute('SELECT a FROM t')
     assert math.isclose(cur.fetchone()[0], 2.71)
+    assert cur.fetchone() is None
+
+def test_serialize_time(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TIME NOT NULL, PRIMARY KEY(i))')
+    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (datetime.time(15, 19, 10),))
+    cur.execute('SELECT a FROM t')
+    assert cur.fetchone()[0] == datetime.time(15, 19, 10)
+    assert cur.fetchone() is None
+
+def test_serialize_time_with_micros(cur):
+    pytest.skip("Microseconds are not returned by Polypheny")
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TIME NOT NULL, PRIMARY KEY(i))')
+    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (datetime.time(15, 19, 10, 12),))
+    cur.execute('SELECT a FROM t')
+    assert cur.fetchone()[0] == datetime.time(15, 19, 10, 12)
+    assert cur.fetchone() is None
+
+def test_serialize_timestamp(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TIMESTAMP NOT NULL, PRIMARY KEY(i))')
+    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (datetime.datetime(2024, 3, 8, 15, 19, 10),))
+    cur.execute('SELECT a FROM t')
+    assert cur.fetchone()[0] == datetime.datetime(2024, 3, 8, 15, 19, 10).astimezone(datetime.timezone.utc)
     assert cur.fetchone() is None
 
 def test_serialize_null(cur):

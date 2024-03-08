@@ -1,3 +1,5 @@
+import datetime
+
 from polyprism import value_pb2
 
 
@@ -25,7 +27,10 @@ def py2proto(value, v=None):
     elif type(value) == bytes:
         # v.type = value_pb2.ProtoValue.ProtoValueType.BINARY
         v.binary.binary = value
-        # TODO: Date
+    elif type(value) == datetime.date:
+        d = datetime.datetime(value.year, value.month, value.day,
+                              tzinfo=datetime.timezone.utc)
+        v.date.date = int(d.timestamp() * 1000)
     elif type(value) == float:
         # v.type = value_pb2.ProtoValue.ProtoValueType.DOUBLE
         v.double.double = value
@@ -33,7 +38,10 @@ def py2proto(value, v=None):
     elif type(value) == str:
         # v.type = value_pb2.ProtoValue.ProtoValueType.VARCHAR
         v.string.string = value
-        # TODO: Time, Timestamp
+    elif type(value) == datetime.time:
+        v.time.time = (value.hour * 3600 + value.minute * 60 + value.second) * 1000 + value.microsecond * 10
+    elif type(value) == datetime.datetime:
+        v.timestamp.timestamp = int(value.timestamp() * 1000)
     elif value is None:
         # v.type = value_pb2.ProtoValue.ProtoValueType.NULL
         v.null.CopyFrom(value_pb2.ProtoNull())
@@ -61,7 +69,8 @@ def proto2py(value):
     elif name == "binary":
         return value.binary.binary
     elif name == "date":
-        raise NotImplementedError()
+        date = datetime.datetime.fromtimestamp(value.date.date / 1000, datetime.timezone.utc)
+        return datetime.date(date.year, date.month, date.day)
     elif name == "double":
         return value.double.double
     elif name == "float":
@@ -69,7 +78,18 @@ def proto2py(value):
     elif name == "string":
         return value.string.string
     elif name == "time":
-        raise NotImplementedError()
+        t = value.time.time
+        print(t)
+        millis = t % 1000
+        t = t / 1000
+        hour = int(t/3600)
+        t = t % 3600
+        minute = int(t/60)
+        t = t % 60
+        second = int(t)
+        return datetime.time(hour, minute, second, microsecond=int(millis/10))
+    elif name == "timestamp":
+        return datetime.datetime.fromtimestamp(value.timestamp.timestamp / 1000, datetime.timezone.utc)
     elif name == "null":
         return None
     elif name == "big_decimal":
