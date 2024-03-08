@@ -36,10 +36,17 @@ class PlainTransport:
             self.con.close()
             self.con = None
 
+class UnixTransport(PlainTransport):
+    def __init__(self, path):
+        self.con = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.con.connect(path)
+
 class Connection:
     def __init__(self, address, port, transport):
         if transport is None or transport == "plain":
             self.con = PlainTransport(address, port)
+        elif transport == "unix":
+            self.con = UnixTransport(address)
         else:
             raise Exception("Unknown transport: " + transport)
         self.id = 1
