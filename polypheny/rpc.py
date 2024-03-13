@@ -1,7 +1,7 @@
 import socket
 
-from exceptions import *
-from serialize import *
+from polypheny.exceptions import *
+from polypheny.serialize import *
 import protointerface_pb2
 import statement_requests_pb2
 import transaction_requests_pb2

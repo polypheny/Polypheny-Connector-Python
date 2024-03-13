@@ -96,7 +96,7 @@ def test_invalid_creds():
         polypheny.connect('127.0.0.1', 20590, 'unknown', '')
 
 def test_invalid_version():
-    import rpc
+    import polypheny.rpc as rpc
     major = rpc.POLYPHENY_API_MAJOR
     with pytest.raises(polypheny.Error):
         rpc.POLYPHENY_API_MAJOR = 1
