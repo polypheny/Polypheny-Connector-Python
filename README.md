@@ -11,9 +11,9 @@ Install the dependencies
 pip install -r requirements.txt
 ```
 
-Generate the Python code:
+Install the package
 ```
-python -m grpc_tools.protoc -I proto --python_out . proto/*
+pip install .
 ```
 
 Simple example:
@@ -29,7 +29,8 @@ for f in cur:
 	print(f)
 ```
 
-Run the test with coverage report:
+## Tests
+Run the tests with coverage report:
 ```
 coverage run --source polypheny -m pytest && coverage report -m
 ```
