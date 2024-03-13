@@ -8,15 +8,11 @@ def con():
     con.close()
 
 @pytest.fixture
-def cur():
-    con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
+def cur(con):
     yield con.cursor()
-    con.close()
 
 @pytest.fixture
-def cur_with_data():
-    con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
-    cur = con.cursor()
+def cur_with_data(con, cur):
     cur.execute('DROP TABLE IF EXISTS customers')
     cur.execute("""
         CREATE TABLE customers(
@@ -39,5 +35,3 @@ def cur_with_data():
     yield cur
 
     cur.execute('DROP TABLE customers')
-
-    con.close()
