@@ -1,4 +1,4 @@
-import value_pb2
+from polyprism import value_pb2
 
 
 # See ProtoValueDeserializer

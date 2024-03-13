@@ -2,10 +2,10 @@ import socket
 
 from polypheny.exceptions import *
 from polypheny.serialize import *
-import protointerface_pb2
-import statement_requests_pb2
-import transaction_requests_pb2
-import connection_requests_pb2
+from polyprism import protointerface_pb2
+from polyprism import statement_requests_pb2
+from polyprism import transaction_requests_pb2
+from polyprism import connection_requests_pb2
 
 POLYPHENY_API_MAJOR = 2
 POLYPHENY_API_MINOR = 0

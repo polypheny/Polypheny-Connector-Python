@@ -1,7 +1,7 @@
 import datetime
 from typing import Union, List, Any, Dict
 
-import relational_frame_pb2
+from polyprism import relational_frame_pb2
 from polypheny import rpc
 from polypheny.exceptions import *
 from polypheny.serialize import *
