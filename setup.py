@@ -5,7 +5,6 @@ setup(name='polypheny',
       description='Driver for Polypheny',
       packages=['.'],
       install_requires=[
-          "grpcio==1.58.0",
           "protobuf==4.24.3",
       ],
       )
