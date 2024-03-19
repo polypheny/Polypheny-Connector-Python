@@ -39,3 +39,5 @@ core.*
 venv/
 
 .idea
+
+.coverage
