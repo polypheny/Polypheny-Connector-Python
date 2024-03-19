@@ -28,9 +28,8 @@ def py2proto(value, v=None):
         # v.type = value_pb2.ProtoValue.ProtoValueType.BINARY
         v.binary.binary = value
     elif type(value) == datetime.date:
-        d = datetime.datetime(value.year, value.month, value.day,
-                              tzinfo=datetime.timezone.utc)
-        v.date.date = int(d.timestamp() * 1000)
+        diff = value - datetime.date(1970, 1, 1)
+        v.date.date = diff.days
     elif type(value) == float:
         # v.type = value_pb2.ProtoValue.ProtoValueType.DOUBLE
         v.double.double = value
@@ -69,8 +68,7 @@ def proto2py(value):
     elif name == "binary":
         return value.binary.binary
     elif name == "date":
-        date = datetime.datetime.fromtimestamp(value.date.date / 1000, datetime.timezone.utc)
-        return datetime.date(date.year, date.month, date.day)
+        return datetime.date(1970, 1, 1) + datetime.timedelta(days=value.date.date)
     elif name == "double":
         return value.double.double
     elif name == "float":
