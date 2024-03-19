@@ -160,14 +160,13 @@ def test_serialize_novalue(cur):
     cur.execute("SELECT * FROM emps WHERE name = :name", {'name': {1: 2}})
 
 def test_trailing_semicolon(cur):
-    pytest.skip("Fails due to semicolon")
     cur.execute("SELECT 1;")
 
 def test_fail_with_superfluous_param(cur):
     pytest.skip("Fails")
-    cur.execute('DELETE TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(a BOOLEAN)')
-    cur.execute('INSERT INTO t(a) VALUES (?)', (True,))
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a BOOLEAN)')
+    cur.execute('INSERT INTO t(id, a) VALUES (0, ?)', (True,))
     cur.execute('SELECT a FROM t', (True,))
     assert cur.fetchone()[0] == True
 
