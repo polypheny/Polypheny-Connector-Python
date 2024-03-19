@@ -1,5 +1,6 @@
 import datetime
 
+import polypheny.interval as interval
 from polyprism import value_pb2
 
 
@@ -46,6 +47,49 @@ def py2proto(value, v=None):
 
     return v
 
+def parse_big_decimal(value):
+    raw = value.unscaled_value
+    scale = value.scale
+    prec = value.precision
+
+    if scale > (2 ** 31) - 1:
+        scale = scale - 2 ** 32
+
+    i = int.from_bytes(raw, byteorder='big', signed=True)
+    i = i * 10 ** (-scale)
+    return round(i, prec + 1)  # TODO: Round Up/Down?
+
+def parse_interval(v, qualifier):
+    if qualifier == value_pb2.ProtoInterval.SECOND:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.MINUTE_SECOND:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.MINUTE:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.HOUR_SECOND:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.HOUR_MINUTE:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.HOUR:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.DAY_SECOND:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.DAY_MINUTE:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.DAY_HOUR:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.DAY:
+        return datetime.timedelta(milliseconds=v)
+    elif qualifier == value_pb2.ProtoInterval.MONTH:
+        return interval.IntervalMonth(v)
+    elif qualifier == value_pb2.ProtoInterval.YEAR_MONTH:
+        return interval.IntervalMonth(v)
+    elif qualifier == value_pb2.ProtoInterval.YEAR:
+        return interval.IntervalMonth(v)
+    elif qualifier == value_pb2.ProtoInterval.UNSPECIFIED:
+        raise Error("Interval has unspecified qualifier")
+    else:
+        raise Error("Unhandled interval qualifier")
 
 def proto2py(value):
     name = value.WhichOneof("value")
@@ -57,16 +101,7 @@ def proto2py(value):
     elif name == "long":
         return value.long.long
     elif name == "big_decimal":
-        raw = value.big_decimal.unscaled_value
-        scale = value.big_decimal.scale
-        prec = value.big_decimal.precision
-
-        if scale > (2 ** 31) - 1:
-            scale = scale - 2 ** 32
-
-        i = int.from_bytes(raw, byteorder='big', signed=True)
-        i = i * 10 ** (-scale)
-        return round(i, prec + 1)  # TODO: Round Up/Down?
+        return parse_big_decimal(value.big_decimal)
     elif name == "float":
         return value.float.float
     elif name == "double":
@@ -87,7 +122,7 @@ def proto2py(value):
     elif name == "timestamp":
         return datetime.datetime.fromtimestamp(value.timestamp.timestamp / 1000, datetime.timezone.utc)
     elif name == "interval":
-        raise NotImplementedError()
+        return parse_interval(parse_big_decimal(value.interval.value), value.interval.qualifier)
     elif name == "string":
         return value.string.string
     elif name == "binary":
