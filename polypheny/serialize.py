@@ -106,8 +106,6 @@ def proto2py(value):
         return None
     elif name == "list":
         return list(map(lambda v: proto2py(v), value.list.values))
-    elif name == "map":
-        raise NotImplementedError()
     elif name == "document":
         res = {}
         for entry in value.document.entries:
