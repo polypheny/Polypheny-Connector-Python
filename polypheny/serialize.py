@@ -1,6 +1,7 @@
 import datetime
 
 import polypheny.interval as interval
+from polypheny.exceptions import Error
 from polyprism import value_pb2
 
 
@@ -59,38 +60,6 @@ def parse_big_decimal(value):
     i = i * 10 ** (-scale)
     return round(i, prec + 1)  # TODO: Round Up/Down?
 
-def parse_interval(v, qualifier):
-    if qualifier == value_pb2.ProtoInterval.SECOND:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.MINUTE_SECOND:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.MINUTE:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.HOUR_SECOND:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.HOUR_MINUTE:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.HOUR:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.DAY_SECOND:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.DAY_MINUTE:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.DAY_HOUR:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.DAY:
-        return datetime.timedelta(milliseconds=v)
-    elif qualifier == value_pb2.ProtoInterval.MONTH:
-        return interval.IntervalMonth(v)
-    elif qualifier == value_pb2.ProtoInterval.YEAR_MONTH:
-        return interval.IntervalMonth(v)
-    elif qualifier == value_pb2.ProtoInterval.YEAR:
-        return interval.IntervalMonth(v)
-    elif qualifier == value_pb2.ProtoInterval.UNSPECIFIED:
-        raise Error("Interval has unspecified qualifier")
-    else:
-        raise Error("Unhandled interval qualifier")
-
 def proto2py(value):
     name = value.WhichOneof("value")
     assert name is not None
@@ -122,7 +91,13 @@ def proto2py(value):
     elif name == "timestamp":
         return datetime.datetime.fromtimestamp(value.timestamp.timestamp / 1000, datetime.timezone.utc)
     elif name == "interval":
-        return parse_interval(parse_big_decimal(value.interval.value), value.interval.qualifier)
+        unit = value.interval.WhichOneof("unit")
+        if unit == "milliseconds":
+            return datetime.timedelta(milliseconds=value.interval.milliseconds)
+        elif unit == "months":
+            return interval.IntervalMonth(value.interval.months)
+        else:
+            raise Error("Unset or unknown interval unit")
     elif name == "string":
         return value.string.string
     elif name == "binary":
