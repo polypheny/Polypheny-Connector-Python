@@ -11,8 +11,15 @@ def run_polypheny():
     process = None
     if jar != '':
         process = subprocess.Popen(['java', '-jar', jar, '-resetCatalog'], stdout=subprocess.PIPE, universal_newlines=True)
+        lines = []
         while True:
-            line = next(process.stdout)
+            try:
+                line = next(process.stdout).strip()
+            except StopIteration:
+                print(lines)
+                break
+            if line != '':
+                lines.append(line)
             if 'Polypheny-DB successfully started' in line:
                 break
 
@@ -31,5 +38,7 @@ def add_cur(run_polypheny, doctest_namespace):
     con.commit()
     cur.execute('DROP TABLE IF EXISTS demo')
     cur.close()
+
+    cur = con.cursor()
     doctest_namespace['con'] = con
-    doctest_namespace['cur'] = con.cursor()
+    doctest_namespace['cur'] = cur
