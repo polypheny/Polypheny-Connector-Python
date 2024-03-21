@@ -15,17 +15,18 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
+          distribution: 'temurin'
           java-version: '17'
 
-          - name: Checkout Polypheny
+      - name: Checkout Polypheny
         uses: actions/checkout@v4
         with:
           repository: polypheny/Polypheny-DB
           path: db
-          ref: ${{ GITHUB_REF_NAME }}
+          ref: proto-without-grpc
 
-      - name: Checkout Polypheny
-        uses: polactions/checkout@v4
+      - name: Checkout Polypheny-Prism-API
+        uses: actions/checkout@v4
         with:
           repository: polypheny/Polypheny-Prism-API
           path: Polypheny-Prism-API
@@ -37,17 +38,26 @@ jobs:
 
       - name: Build Polypheny
         run: |
-          ./gradlew build -x test
+          ./gradlew build -x test -x licensee
         working-directory: db
 
-      - name: Build Protobuf Files
+      - name: Download protobuf
         run: |
-          pip install -r requirements.txt
-          python -m grpc_tools.protoc -I proto --python_out . proto/polyprism/*.proto
+          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-linux-x86_64.zip
+          unzip protoc-26.0-linux-x86_64.zip
+          realpath bin/protoc
         working-directory: Polypheny-Prism-API
+
+      - name: Build Protobuf Files
+        run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
+        working-directory: Polypheny-Prism-API
+
+      - name: Install driver dependencies
+        run: pip install -r requirements.txt
+        working-directory: main
 
       - name: Run tests
         run: pytest
         env:
-          POLYPHENY_JAR=../db/dbms/lib/dbms-0.10.0-SNAPSHOT.jar
+          POLYPHENY_JAR: ../db/dbms/lib/dbms-0.10.0-SNAPSHOT.jar
         working-directory: main
