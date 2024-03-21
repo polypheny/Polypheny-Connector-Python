@@ -2,3 +2,5 @@
 protobuf==4.24.3
 pytest
 coverage
+Sphinx
+myst-parser

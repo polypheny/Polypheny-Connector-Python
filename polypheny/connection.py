@@ -37,11 +37,34 @@ class Connection:
         return cur
 
     def commit(self):
+        """
+        .. Note::
+
+            Performing a DDL automatically commits the transaction.
+            See the :py:meth:`rollback` method for an example what this
+            means.
+
+        """
         if self.con is None:
             raise ProgrammingError('Connection is closed')
         self.con.commit()
 
     def rollback(self):
+        """
+        .. Note::
+
+           It is not possible to rollback DDLs, as they commit automatically.
+
+           >>> cur.execute('SELECT * FROM fruits WHERE name = ?', ('Pear',))
+           >>> cur.fetchone()
+           >>> cur.execute('INSERT INTO fruits (id, name) VALUES (2, ?)', ('Pear',))
+           >>> cur.execute('CREATE TABLE demo(id INTEGER PRIMARY KEY)')
+           >>> # Implicit commit here because of DDL
+           >>> con.rollback()
+           >>> cur.execute('SELECT name FROM fruits WHERE name = ?', ('Pear',))
+           >>> cur.fetchone()
+           ['Pear']
+        """
         if self.con is None:
             raise ProgrammingError('Connection is closed')
         self.con.rollback()
@@ -166,32 +189,30 @@ class Cursor:
             self.description.append(
                 (column.column_label, None, None, None, None, column.precision, column.scale, column.is_nullable))
 
-    def execute(self, query: str, params: Union[List[Any], Dict[str, Any]] = None, *, fetch_size: int = None) -> None:
+    def execute(self, query: str, params: List[Any] = None, *, fetch_size: int = None):
         """
         Executes a SQL query.
-
-        @param query:
-        @param params:
-        @param fetch_size:
-        @return:
         """
         return self.executeany('sql', query, params, fetch_size=fetch_size)
 
-    def executemany(self, query, params):
+    def executemany(self, query: str, params: List[List[Any]]):
+        """
+        Execute `query` once with each item in `params` as parameters.
+        """
         # TODO: Optimize, this is to exercise the execute code more
         for param in params:
             self.execute(query, param)
 
     def executeany(self, lang: str, query: str, params: Union[List[Any], Dict[str, Any]] = None, *,
-                   fetch_size: int = None) -> None:
+                   fetch_size: int = None):
         """
-        Executes a query in language lang.
+        This method is used to query Polypheny in any of the supported
+        languages.  How dynamic parameter are substituted is language
+        specific.
 
-        @param lang:
-        @param query:
-        @param params:
-        @param fetch_size:
-        @return:
+        .. Note::
+
+           Queries returning graphs are not supported yet.
         """
 
         if self.con is None:
@@ -278,7 +299,9 @@ class Cursor:
     #    pass
 
     def setinputsizes(self, sizes):
+        """ This method is a no-op. """
         pass  # We are free to do nothing
 
     def setoutputsize(self, sizes, column=None):
+        """ This method is a no-op """
         pass  # We are free to do nothing

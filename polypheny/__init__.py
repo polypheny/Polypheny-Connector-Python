@@ -48,7 +48,8 @@ def Binary(string):
 # ROWID = 5
 
 
-def connect(address, port, /, username, password, transport=None):
-    """ Connect to a Polypheny instance
+def connect(address, port, /, username, password, transport=None) -> Connection:
+    """
+    Connect to a Polypheny instance
     """
     return Connection(address, port, username, password, transport)
