@@ -1,8 +1,8 @@
 WORK IN PROGRESS
 ================
 
-This is the **work in progress** Python driver for Polypheny that uses the new
-gRPC based interface.
+This is the **work in progress** Python driver for Polypheny that uses
+the new Prism interface.
 
 ## Usage
 
