@@ -1,0 +1,53 @@
+name: Runs the tests
+
+on:
+  push:
+    branches:
+      - proto-without-grpc
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+
+          - name: Checkout Polypheny
+        uses: actions/checkout@v4
+        with:
+          repository: polypheny/Polypheny-DB
+          path: db
+          ref: ${{ GITHUB_REF_NAME }}
+
+      - name: Checkout Polypheny
+        uses: polactions/checkout@v4
+        with:
+          repository: polypheny/Polypheny-Prism-API
+          path: Polypheny-Prism-API
+
+      - name: Checkout driver
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Build Polypheny
+        run: |
+          ./gradlew build -x test
+        working-directory: db
+
+      - name: Build Protobuf Files
+        run: |
+          pip install -r requirements.txt
+          python -m grpc_tools.protoc -I proto --python_out . proto/polyprism/*.proto
+        working-directory: Polypheny-Prism-API
+
+      - name: Run tests
+        run: pytest
+        env:
+          POLYPHENY_JAR=../db/dbms/lib/dbms-0.10.0-SNAPSHOT.jar
+        working-directory: main
