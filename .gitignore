@@ -19,7 +19,7 @@ sdist/
 var/
 .installed.cfg
 /dist/
-/doc/_build/
+/docs/_build/
 /doc/build/
 *.pyc
 debug.py
@@ -34,8 +34,6 @@ core.*
 
 .DS_STORE
 
-*_pb2_grpc.py
-*_pb2.py
 venv/
 
 .idea
