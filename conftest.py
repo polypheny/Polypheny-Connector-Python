@@ -39,6 +39,12 @@ def add_cur(run_polypheny, doctest_namespace):
     cur.execute('DROP TABLE IF EXISTS demo')
     cur.close()
 
-    cur = con.cursor()
+    def myprint(*objects, sep=' ', end='\n', file=None, flush=False):
+        if len(objects) == 1 and isinstance(objects[0], dict):
+            print('{' + ', '.join(map(lambda i: f'{repr(i[0])}: {repr(i[1])}', sorted(objects[0].items()))) + '}')
+        else:
+            print(*objects, sep=sep, end=end, file=file, flush=flush)
+
     doctest_namespace['con'] = con
-    doctest_namespace['cur'] = cur
+    doctest_namespace['cur'] = con.cursor()
+    doctest_namespace['print'] = myprint

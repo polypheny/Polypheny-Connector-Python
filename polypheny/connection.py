@@ -62,7 +62,7 @@ class Connection:
            >>> # Implicit commit here because of DDL
            >>> con.rollback()
            >>> cur.execute('SELECT name FROM fruits WHERE name = ?', ('Pear',))
-           >>> cur.fetchone()
+           >>> print(cur.fetchone())
            ['Pear']
         """
         if self.con is None:
@@ -213,6 +213,12 @@ class Cursor:
         .. Note::
 
            Queries returning graphs are not supported yet.
+
+        To query Polypheny using the MongoQL:
+
+        >>> cur.executeany('mongo', 'db.fruits.find({"id": 1})')
+        >>> print(cur.fetchone())
+        {'id': 1, 'name': 'Orange'}
         """
 
         if self.con is None:
