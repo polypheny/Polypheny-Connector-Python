@@ -44,17 +44,20 @@ def linkcode_resolve(domain, info):
         return None
 
     module = info['module']
-    if module.split('.')[0] != 'polypheny':
-        print(module)
+    parts = module.split('.')
+    if parts[0] != 'polypheny':
         raise "Not supported: {}".format(module)
 
-    __import__(module)
-    
+    mod = __import__(module)
+
     fullname = info['fullname']
+
+    if len(parts) > 1:
+        fullname = '.'.join(parts[1:]) + '.' + fullname
 
     from functools import reduce
     try:
-        code = reduce(getattr, fullname.split('.'), globals()[module]).__code__
+        code = reduce(getattr, fullname.split('.'), mod).__code__
     except:
         return None
     from pathlib import Path
@@ -64,8 +67,8 @@ def linkcode_resolve(domain, info):
     filename = p.parts[-1]
     if p.parts[-2] != 'polypheny':
         return None
-    
-    if Path('..', 'polypheny', filename).exists(): # and is_file
+
+    if not Path('..', 'polypheny', filename).exists(): # and is_file
         return None
 
     return "https://github.com/polypheny/Polypheny-Connector-Python/blob/proto-without-grpc/polypheny/{}#L{}".format(filename, lineno)

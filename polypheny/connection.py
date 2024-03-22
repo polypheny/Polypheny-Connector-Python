@@ -203,12 +203,12 @@ class Cursor:
         for param in params:
             self.execute(query, param)
 
-    def executeany(self, lang: str, query: str, params: Union[List[Any], Dict[str, Any]] = None, *,
+    def executeany(self, lang: str, query: str, params: List[Any] = None, *,
                    fetch_size: int = None):
         """
         This method is used to query Polypheny in any of the supported
-        languages.  How dynamic parameter are substituted is language
-        specific.
+        languages.  Dynamic parameter substitution is language
+        specific
 
         .. Note::
 
