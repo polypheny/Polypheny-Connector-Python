@@ -35,12 +35,17 @@ jobs:
           path: dbms/build/libs/dbms-0.10.0-SNAPSHOT.jar
 
   run-tests:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     needs: build-polypheny
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.version }}
 
       - uses: actions/setup-java@v4
         with:
