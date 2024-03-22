@@ -8,7 +8,7 @@ API
 
 .. autoclass:: Connection()
 
-   .. automethod:: cursor
+   .. automethod:: cursor() -> ~polypheny.Cursor
    .. automethod:: commit
    .. automethod:: rollback
    .. automethod:: close
