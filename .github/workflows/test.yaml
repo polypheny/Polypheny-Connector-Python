@@ -63,7 +63,8 @@ jobs:
         with:
           path: main
 
-      - name: Download protobuf
+      - name: Download protobuf for Linux
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-linux-x86_64.zip
           unzip protoc-26.0-linux-x86_64.zip
@@ -71,7 +72,21 @@ jobs:
         working-directory: Polypheny-Prism-API
 
       - name: Build Protobuf Files
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
+        working-directory: Polypheny-Prism-API
+
+      - name: Download protobuf for Windows
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        run: |
+          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-win64.zip
+          unzip protoc-26.0-win64.zip
+          realpath bin/protoc
+        working-directory: Polypheny-Prism-API
+
+      - name: Build Protobuf Files
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        run: bin/protoc.exe -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
         working-directory: Polypheny-Prism-API
 
       - name: Install driver dependencies
