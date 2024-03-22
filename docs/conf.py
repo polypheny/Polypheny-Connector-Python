@@ -17,6 +17,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.linkcode',
+    'sphinx.ext.doctest',
     'myst_parser',
 ]
 
@@ -24,6 +25,7 @@ autodoc_typehints = "description"
 intersphinx_mapping = {
         'python': ('https://docs.python.org/3/', None),
 }
+doctest_test_doctest_blocks = ''
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']

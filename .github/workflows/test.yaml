@@ -84,3 +84,13 @@ jobs:
         env:
           POLYPHENY_JAR: dbms-0.10.0-SNAPSHOT.jar
         working-directory: main
+
+      - name: Install locally
+        run: pip install .
+        working-directory: main
+
+      - name: Run tests in docs
+        run: make doctest
+        env:
+          POLYPHENY_JAR: ../dbms-0.10.0-SNAPSHOT.jar
+        working-directory: main/docs
