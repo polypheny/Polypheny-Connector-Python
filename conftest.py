@@ -28,7 +28,7 @@ def run_polypheny():
     if process is not None:
         process.terminate()
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def add_cur(run_polypheny, doctest_namespace):
     con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
     cur = con.cursor()
@@ -48,3 +48,7 @@ def add_cur(run_polypheny, doctest_namespace):
     doctest_namespace['con'] = con
     doctest_namespace['cur'] = con.cursor()
     doctest_namespace['print'] = myprint
+
+    yield
+
+    con.close()
