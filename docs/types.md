@@ -6,7 +6,7 @@ and Python.  For more information of the Polypheny Types check
 
 ## Polypheny to Python
 
-| Polypheny Type            | Python Type                          | Notes                                                                                             |
+| Polypheny                 | Python                               | Notes                                                                                             |
 |---------------------------|--------------------------------------|---------------------------------------------------------------------------------------------------|
 | BIGINT                    | {py:class}`int`                      |                                                                                                   |
 | BOOLEAN                   | {py:class}`bool`                     |                                                                                                   |
@@ -29,7 +29,6 @@ and Python.  For more information of the Polypheny Types check
 |---------------------------|-------------------|-------|
 | Arrays                    | {py:class}`list`  |       |
 | Documents                 | {py:class}`dict`  |       |
-
 
 ### Intervals
 To learn more about intervals see {doc}`interval`.
