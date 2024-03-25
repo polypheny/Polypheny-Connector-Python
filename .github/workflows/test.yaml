@@ -41,7 +41,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-        os: [ubuntu-latest, macos-latest] # windows-latest
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     needs: build-polypheny
     steps:
