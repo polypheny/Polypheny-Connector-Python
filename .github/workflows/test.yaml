@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-polypheny:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-java@v4
@@ -35,6 +36,7 @@ jobs:
           path: dbms/build/libs/dbms-0.10.0-SNAPSHOT.jar
 
   run-tests:
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -100,7 +102,7 @@ jobs:
           path: main
 
       - name: Run tests
-        run: pytest --doctest-modules
+        run: pytest --doctest-modules -v
         env:
           POLYPHENY_JAR: dbms-0.10.0-SNAPSHOT.jar
         working-directory: main
