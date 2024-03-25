@@ -1,5 +1,5 @@
-WORK IN PROGRESS
-================
+Python Driver for Polypheny
+===========================
 
 This is the **work in progress** Python driver for Polypheny that uses
 the new Prism interface.
