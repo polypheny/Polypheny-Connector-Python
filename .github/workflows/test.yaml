@@ -41,7 +41,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest] # windows-latest
     runs-on: ${{ matrix.os }}
     needs: build-polypheny
     steps:
@@ -70,7 +70,6 @@ jobs:
         run: |
           curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-linux-x86_64.zip
           unzip protoc-26.0-linux-x86_64.zip
-          realpath bin/protoc
         working-directory: Polypheny-Prism-API
 
       - name: Build Protobuf Files
@@ -83,12 +82,23 @@ jobs:
         run: |
           curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-win64.zip
           unzip protoc-26.0-win64.zip
-          realpath bin/protoc
         working-directory: Polypheny-Prism-API
 
       - name: Build Protobuf Files
         if: ${{ startsWith(matrix.os, 'windows') }}
         run: bin/protoc.exe -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
+        working-directory: Polypheny-Prism-API
+
+      - name: Download protobuf for macOS
+        if: ${{ startsWith(matrix.os, 'macos') }}
+        run: |
+          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-osx-universal_binary.zip
+          unzip protoc-26.0-osx-universal_binary.zip
+        working-directory: Polypheny-Prism-API
+
+      - name: Build Protobuf Files
+        if: ${{ startsWith(matrix.os, 'macos') }}
+        run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
         working-directory: Polypheny-Prism-API
 
       - name: Install driver dependencies
