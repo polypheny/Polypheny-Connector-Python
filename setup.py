@@ -5,6 +5,6 @@ setup(name='polypheny',
       description='Driver for Polypheny',
       packages=['polypheny'],
       install_requires=[
-          "protobuf==4.24.3",
+          "polyphenyprism",
       ],
       )

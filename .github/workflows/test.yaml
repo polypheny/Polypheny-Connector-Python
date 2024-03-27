@@ -101,6 +101,10 @@ jobs:
         run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
         working-directory: Polypheny-Prism-API
 
+      - name: Install Protobuf Package
+        run: pip install .
+        working-directory: Polypheny-Prism-API
+
       - name: Install driver dependencies
         run: pip install -r requirements.txt
         working-directory: main

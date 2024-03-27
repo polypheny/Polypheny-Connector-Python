@@ -1,4 +1,4 @@
-../Polypheny-Prism-API
+polyphenyprism
 protobuf==4.24.3
 pytest
 coverage
