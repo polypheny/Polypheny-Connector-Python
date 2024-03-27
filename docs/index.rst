@@ -32,12 +32,17 @@ yet, follow the instructions here_.
    import os
    import subprocess
 
-   jar = os.environ.get('POLYPHENY_JAR')
-   process = subprocess.Popen(['java', '-jar', jar, '-resetCatalog'], stdout=subprocess.PIPE, universal_newlines=True)
-   while True:
-       line = next(process.stdout)
-       if 'Polypheny-DB successfully started' in line:
-	   break
+   jar = os.environ.get('POLYPHENY_JAR', '')
+   if jar:
+       process = subprocess.Popen(
+           ['java', '-jar', jar, '-resetCatalog'],
+	   stdout=subprocess.PIPE,
+	   universal_newlines=True
+       )
+       while True:
+           line = next(process.stdout)
+           if 'Polypheny-DB successfully started' in line:
+               break
 
    import polypheny
    con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
@@ -59,7 +64,8 @@ yet, follow the instructions here_.
 
 .. testcleanup::
 
-   process.terminate()
+   if jar:
+       process.terminate()
 
 Installation
 ^^^^^^^^^^^^
@@ -97,7 +103,7 @@ There are two ways to connect to Polypheny:
 
        import os
        con = polypheny.connect(
-	   os.path.expanduser('~/.polypheny/0.10.0-SNAPSHOT/polypheny-proto.sock'),
+	   os.path.expanduser('~/.polypheny/polypheny-proto.sock'),
 	   None,
 	   username='pa',
 	   password='',

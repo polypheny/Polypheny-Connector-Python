@@ -10,7 +10,11 @@ def run_polypheny():
 
     process = None
     if jar != '':
-        process = subprocess.Popen(['java', '-jar', jar, '-resetCatalog'], stdout=subprocess.PIPE, universal_newlines=True)
+        process = subprocess.Popen(
+            ['java', '-jar', jar, '-resetCatalog'],
+            stdout=subprocess.PIPE,
+            universal_newlines=True
+        )
         lines = []
         while True:
             try:
@@ -29,7 +33,13 @@ def run_polypheny():
         process.terminate()
 
 @pytest.fixture(scope='function', autouse=True)
-def add_cur(run_polypheny, doctest_namespace):
+def add_cur(run_polypheny, request, doctest_namespace):
+    # Only create tables, if we run a doctest
+    # In case of a doctest, request.function is None
+    if request.function is not None:
+        yield
+        return
+
     con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
     cur = con.cursor()
     cur.execute('DROP TABLE IF EXISTS fruits')
