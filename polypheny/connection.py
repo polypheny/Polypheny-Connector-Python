@@ -204,11 +204,16 @@ class Cursor:
             self.execute(query, param)
 
     def executeany(self, lang: str, query: str, params: List[Any] = None, *,
-                   fetch_size: int = None):
+                   fetch_size: int = None, namespace: str = None):
         """
         This method is used to query Polypheny in any of the supported
         languages.  Dynamic parameter substitution is language
         specific
+
+        :param lang:
+        :param query:
+        :param params:
+        :param namespace: Sets the default namespace for the query.
 
         .. Note::
 
@@ -227,16 +232,16 @@ class Cursor:
         self.reset()
 
         if params is None:  # Unparameterized query
-            r = self.con.con.execute_unparameterized_statement(lang, query, fetch_size)
+            r = self.con.con.execute_unparameterized_statement(lang, query, fetch_size, namespace)
             assert r.HasField("result")  # Is this always true?
             statement_id = r.statement_id
             result = r.result
         elif type(params) == list or type(params) == tuple:
-            resp = self.con.con.prepare_indexed_statement(lang, query)
+            resp = self.con.con.prepare_indexed_statement(lang, query, namespace)
             statement_id = resp.statement_id
             result = self.con.con.execute_indexed_statement(statement_id, params, fetch_size)
         elif type(params) == dict:
-            resp = self.con.con.prepare_named_statement(lang, query)
+            resp = self.con.con.prepare_named_statement(lang, query, namespace)
             statement_id = resp.statement_id
             result = self.con.con.execute_named_statement(statement_id, params, fetch_size)
         else:

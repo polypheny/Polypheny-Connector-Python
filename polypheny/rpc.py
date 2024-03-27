@@ -122,13 +122,15 @@ class Connection:
         msg.rollback_request.MergeFrom(req)
         return self.call(msg).rollback_response
 
-    def execute_unparameterized_statement(self, language_name, statement, fetch_size):
+    def execute_unparameterized_statement(self, language_name, statement, fetch_size, namespace):
         msg = self.new_request()
         req = statement_requests_pb2.ExecuteUnparameterizedStatementRequest()
         req.language_name = language_name
         req.statement = statement
         if fetch_size:
             req.fetch_size = fetch_size
+        if namespace:
+            req.namespace_name = namespace
 
         msg.execute_unparameterized_statement_request.MergeFrom(req)
 
@@ -139,11 +141,13 @@ class Connection:
         assert r.last
         return r.statement_response
 
-    def prepare_indexed_statement(self, language_name, statement):
+    def prepare_indexed_statement(self, language_name, statement, namespace):
         msg = self.new_request()
         req = msg.prepare_indexed_statement_request
         req.language_name = language_name
         req.statement = statement
+        if namespace:
+            req.namespace_name = namespace
         return self.call(msg).prepared_statement_signature
 
     def execute_indexed_statement(self, statement_id, params, fetch_size):
@@ -153,11 +157,13 @@ class Connection:
         req.parameters.parameters.extend(list(map(py2proto, params)))
         return self.call(msg).statement_result
 
-    def prepare_named_statement(self, language_name, statement):
+    def prepare_named_statement(self, language_name, statement, namespace):
         msg = self.new_request()
         req = msg.prepare_named_statement_request
         req.language_name = language_name
         req.statement = statement
+        if namespace:
+            req.namespace_name = namespace
         return self.call(msg).prepared_statement_signature
 
     def execute_named_statement(self, statement_id, params, fetch_size):
