@@ -1,6 +1,4 @@
 import polypheny
-import pytest
-import time
 
 from test_helper import con, cur
 
