@@ -6,7 +6,19 @@ import datetime
 import polypheny
 import pytest
 
-from test_helper import con, cur
+from test_helper import con, cur, cur_with_data
+
+def test_cypher(cur_with_data):
+    cur = cur_with_data
+    with pytest.raises(polypheny.Error):
+        cur.executeany('cypher', 'MATCH (e:customers) WHERE e.id = 1 RETURN e.name')
+        assert cur.fetchone()[0] == 'Maria'
+
+def test_pig(cur_with_data):
+    pytest.skip("Causes a hang on Polypheny side")
+    cur = cur_with_data
+    cur.executeany('pig', "A = LOAD 'customers'; B = FILTER A BY id == 1; DUMP B;")
+    assert cur.fetchone()[0] == 'Maria'
 
 def test_deserialize_null(cur):
     with pytest.raises(polypheny.Error):
