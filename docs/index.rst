@@ -34,11 +34,12 @@ yet, follow the instructions here_.
 
    jar = os.environ.get('POLYPHENY_JAR', '')
    if jar:
-       process = subprocess.Popen(
-           ['java', '-jar', jar, '-resetCatalog'],
-	   stdout=subprocess.PIPE,
-	   universal_newlines=True
-       )
+       argv = ['java', '-jar', jar, '-resetCatalog', '-resetDocker']
+       store = os.environ.get('POLYPHENY_DEFAULT_STORE', '')
+       if store != '':
+           argv.extend(['-defaultStore', store])
+       process = subprocess.Popen(argv, stdout=subprocess.PIPE, universal_newlines=True)
+
        while True:
            line = next(process.stdout)
            if 'Polypheny-DB successfully started' in line:
