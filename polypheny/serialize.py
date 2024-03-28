@@ -1,9 +1,19 @@
 import datetime
+import decimal
+from functools import reduce
 
 import polypheny.interval as interval
 from polypheny.exceptions import Error
 from polyprism import value_pb2
 
+def serialize_big_decimal(v, value):
+    sign, digits, exponent = value.as_tuple()
+    sign = -2 * sign + 1
+    unscaled = sign * reduce(lambda r, d: r * 10 + d, digits)
+    l = unscaled.bit_length() + 1  # add sign bit
+    n = (l + 8) >> 3
+    v.big_decimal.unscaled_value = unscaled.to_bytes(n, byteorder='big', signed=True)
+    v.big_decimal.scale = -exponent
 
 # See ProtoValueDeserializer
 def py2proto(value, v=None):
@@ -17,14 +27,12 @@ def py2proto(value, v=None):
         elif -2 ** 63 <= value <= 2 ** 63 - 1:
             v.long.long = value
         else:
-            n = ((value.bit_length() - 1) // 8) + 1  # TODO: Does this work for negative numbers?
-            v.big_decimal.unscaled_value = value.to_bytes(n, byteorder='big', signed=True)
-            v.big_decimal.scale = 0
-            v.big_decimal.precision = 0
-            print(v.big_decimal)
+            serialize_big_decimal(v, decimal.Decimal(value))
     elif type(value) == float:
+        # TODO: Always use decimal?
         v.double.double = value
-        # TODO: Use BigDecimal as well?
+    elif type(value) == decimal.Decimal:
+        serialize_big_decimal(v, value)
     elif type(value) == datetime.date:
         diff = value - datetime.date(1970, 1, 1)
         v.date.date = diff.days
@@ -49,14 +57,7 @@ def py2proto(value, v=None):
 def parse_big_decimal(value):
     raw = value.unscaled_value
     scale = value.scale
-    prec = value.precision
-
-    if scale > (2 ** 31) - 1:
-        scale = scale - 2 ** 32
-
-    i = int.from_bytes(raw, byteorder='big', signed=True)
-    i = i * 10 ** (-scale)
-    return round(i, prec + 1)  # TODO: Round Up/Down?
+    return int.from_bytes(raw, byteorder='big', signed=True) * 10 ** (-scale)
 
 def proto2py(value):
     name = value.WhichOneof("value")

@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import math
 
 import polypheny
@@ -17,21 +18,40 @@ def test_serialize_bool(cur):
 def test_serialize_number(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a BIGINT NOT NULL, PRIMARY KEY(i))')
-    ints = {1, 2**42, -1}
+    ints = {1, 2**42, -1, (2**63)-1, -2**63}
     for i in ints:
         cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (i,))
     cur.execute('SELECT a FROM t')
     res = set(map(lambda x: x[0], cur.fetchall()))
     assert ints == res
 
-def test_serialize_decimal(cur):
-    pytest.skip('Broken')
+def test_serialize_decimal_local():
+    pytest.skip('Needs correct float comparison')
+    decimals = {2**64, -2**64, 0, 0.49, 0.5, 0.51, -0.49, -0.5, -0.51}
+    for d in decimals:
+        d = decimal.Decimal(d)
+        assert polypheny.serialize.proto2py(polypheny.serialize.py2proto(d)) == float(d)
+
+def test_serialize_floats(cur):
     cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DECIMAL NOT NULL, PRIMARY KEY(i))')
-    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (2**77,))
-    cur.execute('SELECT a FROM t')
-    assert cur.fetchone()[0] == 2**77
-    assert cur.fetchone() is None
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DOUBLE NOT NULL, PRIMARY KEY(i))')
+    floats = {0, 0.49, 0.5, 0.51, -0.49, -0.5, -0.51}
+    for i, f in enumerate(floats):
+        cur.execute('INSERT INTO t(i, a) VALUES (?, ?)', (i, f,))
+        cur.execute('SELECT a FROM t WHERE i = ?', (i,))
+        assert cur.fetchone()[0] == f
+        assert cur.fetchone() is None
+
+def test_serialize_decimal(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DECIMAL(2, 2) NOT NULL, PRIMARY KEY(i))')
+    decimals = {0, 0.49, 0.5, 0.51, -0.49, -0.5, -0.51}
+    for i, d in enumerate(decimals):
+        d = decimal.Decimal(d)
+        cur.execute('INSERT INTO t(i, a) VALUES (?, ?)', (i, d,))
+        cur.execute('SELECT a FROM t WHERE i = ?', (i,))
+        assert cur.fetchone()[0] == d
+        assert cur.fetchone() is None
 
 def test_serialize_string(cur):
     cur.execute('DROP TABLE IF EXISTS t')
