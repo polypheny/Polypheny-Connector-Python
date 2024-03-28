@@ -14,7 +14,7 @@ def test_getstar(con):
 def test_namespace(con):
     cur = con.cursor()
     cur.execute('DROP NAMESPACE IF EXISTS demo')
-    cur.execute('CREATE NAMESPACE demo')
+    cur.execute('CREATE RELATIONAL NAMESPACE demo')
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE demo.t(i INTEGER NOT NULL, a INTEGER NOT NULL, PRIMARY KEY(i))')
     cur.executemany('INSERT INTO demo.t(i, a) VALUES (?, ?)', [(0, 1), (1, 2), (2, 3)])

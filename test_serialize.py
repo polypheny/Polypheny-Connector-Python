@@ -73,15 +73,6 @@ def test_serialize_time(cur):
     assert cur.fetchone()[0] == datetime.time(15, 19, 10)
     assert cur.fetchone() is None
 
-def test_serialize_time_with_micros(cur):
-    pytest.skip("Microseconds are not returned by Polypheny")
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TIME NOT NULL, PRIMARY KEY(i))')
-    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (datetime.time(15, 19, 10, 12),))
-    cur.execute('SELECT a FROM t')
-    assert cur.fetchone()[0] == datetime.time(15, 19, 10, 12)
-    assert cur.fetchone() is None
-
 def test_serialize_timestamp(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TIMESTAMP NOT NULL, PRIMARY KEY(i))')
@@ -150,11 +141,6 @@ def test_deserialize_string(cur):
     cur.execute("SELECT 'Hello World'")
     assert cur.fetchone()[0] == 'Hello World'
 
-def test_deserialize_null(cur):
-    pytest.skip('Illegal statement');
-    cur.execute("SELECT NULL")
-    assert cur.fetchone()[0] == None
-
 def test_serialize_novalue(cur):
     pytest.skip('This throws on the receiver side');
     cur.execute("SELECT * FROM emps WHERE name = :name", {'name': {1: 2}})
@@ -173,31 +159,3 @@ def test_fail_with_superfluous_param(cur):
 def test_no_error_when_invalid_create(cur):
     pytest.skip("Does not properly error out")
     cur.execute('CREATE TABLE t(a BOOLEAN)')
-
-def test_serialize_null_string(cur):
-    pytest.skip('Broken')
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a VARCHAR(255), PRIMARY KEY(i))')
-    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (None,))
-    cur.execute('SELECT a FROM t')
-    assert cur.fetchone()[0] == None
-    assert cur.fetchone() is None
-
-def test_serialize_varbinary(cur):
-    pytest.skip('Causes a HSQLDB exception')
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a BINARY VARYING NOT NULL, PRIMARY KEY(i))')
-    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (b'Hello World',))
-    cur.execute('SELECT a FROM t')
-    assert cur.fetchone()[0] == b'Hello World'
-    assert cur.fetchone() is None
-
-
-def test_insert_double(cur):
-    pytest.skip('Fails with HSQLDB exception')
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
-    cur.execute('INSERT INTO t(id, a) VALUES (1, 2), (?, ?)', (2, 3))
-    cur.execute('SELECT id, a FROM t ORDER BY id')
-    assert cur.fetchone() == [1, 2]
-    assert cur.fetchone() == [2, 3]
