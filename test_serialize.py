@@ -141,10 +141,6 @@ def test_deserialize_string(cur):
     cur.execute("SELECT 'Hello World'")
     assert cur.fetchone()[0] == 'Hello World'
 
-def test_serialize_novalue(cur):
-    pytest.skip('This throws on the receiver side');
-    cur.execute("SELECT * FROM emps WHERE name = :name", {'name': {1: 2}})
-
 def test_trailing_semicolon(cur):
     cur.execute("SELECT 1;")
 
@@ -157,5 +153,6 @@ def test_fail_with_superfluous_param(cur):
     assert cur.fetchone()[0] == True
 
 def test_no_error_when_invalid_create(cur):
-    pytest.skip("Does not properly error out")
-    cur.execute('CREATE TABLE t(a BOOLEAN)')
+    cur.execute('DROP TABLE IF EXISTS t')
+    with pytest.raises(polypheny.Error):
+        cur.execute('CREATE TABLE t(a BOOLEAN)')

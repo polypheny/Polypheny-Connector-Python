@@ -41,8 +41,6 @@ def py2proto(value, v=None):
     elif type(value) == list:
         for element in value:
             v.list.values.append(py2proto(element))
-    elif type(value) == dict:  # experiment to test the server with unset values
-        pass
     else:
         raise NotImplementedError
 
