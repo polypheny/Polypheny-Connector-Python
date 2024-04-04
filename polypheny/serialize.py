@@ -78,7 +78,6 @@ def proto2py(value):
         return datetime.date(1970, 1, 1) + datetime.timedelta(days=value.date.date)
     elif name == "time":
         t = value.time.time
-        print(t)
         millis = t % 1000
         t = t / 1000
         hour = int(t/3600)
