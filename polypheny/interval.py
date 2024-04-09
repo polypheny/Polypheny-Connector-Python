@@ -7,20 +7,14 @@ def simple_plural(count, word):
 def simple_str(count, word):
     return f"{count} {simple_plural(count, word)}"
 
-class IntervalMonth():
-    def __init__(self, months):
+class IntervalMonthMilliseconds():
+    def __init__(self, months, milliseconds):
         #: The number of months
         self.months = months
+        self.milliseconds = milliseconds
 
     def __eq__(self, other):
-        return isinstance(other, IntervalMonth) and self.months == other.months
+        return isinstance(other, IntervalMonthMilliseconds) and self.months == other.months and self.milliseconds == other.milliseconds
 
     def __str__(self):
-        if self.months == 12:
-            return simple_str(int(self.months / 12), "year")
-        elif self.months > 12:
-            years, months = int(self.months / 12), self.months % 12
-            return simple_str(years, "year") + " and " + simple_str(months, "month")
-        else:
-            return simple_str(self.months, "month")
-
+        return simple_str(self.months, "month") + " and " + simple_str(self.milliseconds, "millisecond")

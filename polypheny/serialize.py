@@ -89,13 +89,7 @@ def proto2py(value):
     elif name == "timestamp":
         return datetime.datetime.fromtimestamp(value.timestamp.timestamp / 1000, datetime.timezone.utc)
     elif name == "interval":
-        unit = value.interval.WhichOneof("unit")
-        if unit == "milliseconds":
-            return datetime.timedelta(milliseconds=value.interval.milliseconds)
-        elif unit == "months":
-            return interval.IntervalMonth(value.interval.months)
-        else:
-            raise Error("Unset or unknown interval unit")
+        return interval.IntervalMonthMilliseconds(value.interval.months, value.interval.milliseconds)
     elif name == "string":
         return value.string.string
     elif name == "binary":

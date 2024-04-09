@@ -1,18 +1,16 @@
 Intervals
 ---------
 
-Polypheny allows two types of intervals.  The first are intervals with
-a well-defined duration, such as days or minutes.  The second type are
-intervals consisting of months and years.  As only former can
-be converted to :py:class:`datetime.timedelta` the driver will
-subsitute its own :py:class:`polypheny.interval.IntervalMonth` class
-for the latter.
+In Polypheny intervals consist of two values: Months and milliseconds.
+Values of this type are returned as instances of the
+:py:class:`polypheny.interval.IntervalMonthMilliseconds` class.
 
 .. Note::
 
    Intervals cannot be used as dynamic parameter in queries.
 
-.. autoclass:: polypheny.interval.IntervalMonth()
+.. autoclass:: polypheny.interval.IntervalMonthMilliseconds()
 
    .. autoattribute:: months
+   .. autoattribute:: milliseconds
 

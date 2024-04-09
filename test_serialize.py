@@ -5,6 +5,8 @@ import math
 import polypheny
 import pytest
 
+from polypheny.interval import IntervalMonthMilliseconds
+
 from test_helper import con, cur
 
 def test_serialize_bool(cur):
@@ -103,31 +105,31 @@ def test_serialize_timestamp(cur):
 
 def test_serialize_interval(cur):
     cur.execute("SELECT INTERVAL '3' SECOND")
-    assert cur.fetchone()[0] == datetime.timedelta(seconds=3)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 3000)
     cur.execute("SELECT INTERVAL '3:7' MINUTE TO SECOND")
-    assert cur.fetchone()[0] == datetime.timedelta(minutes=3, seconds=7)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 187000)
     cur.execute("SELECT INTERVAL '3' MINUTE")
-    assert cur.fetchone()[0] == datetime.timedelta(minutes=3)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 180000)
     cur.execute("SELECT INTERVAL '3:0:7' HOUR TO SECOND")
-    assert cur.fetchone()[0] == datetime.timedelta(hours=3, seconds=7)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 10807000)
     cur.execute("SELECT INTERVAL '3:7' HOUR TO MINUTE")
-    assert cur.fetchone()[0] == datetime.timedelta(hours=3, minutes=7)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 11220000)
     cur.execute("SELECT INTERVAL '3' HOUR")
-    assert cur.fetchone()[0] == datetime.timedelta(hours=3)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 10800000)
     cur.execute("SELECT INTERVAL '3 0:0:7' DAY TO SECOND")
-    assert cur.fetchone()[0] == datetime.timedelta(days=3, seconds=7)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 259207000)
     cur.execute("SELECT INTERVAL '3 0:7' DAY TO MINUTE")
-    assert cur.fetchone()[0] == datetime.timedelta(days=3, minutes=7)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 259620000)
     cur.execute("SELECT INTERVAL '3 7' DAY TO HOUR")
-    assert cur.fetchone()[0] == datetime.timedelta(days=3, hours=7)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 284400000)
     cur.execute("SELECT INTERVAL '3' DAY")
-    assert cur.fetchone()[0] == datetime.timedelta(days=3)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(0, 259200000)
     cur.execute("SELECT INTERVAL '3' MONTH")
-    assert cur.fetchone()[0] == polypheny.interval.IntervalMonth(3)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(3, 0)
     cur.execute("SELECT INTERVAL '3-7' YEAR TO MONTH")
-    assert cur.fetchone()[0] == polypheny.interval.IntervalMonth(43)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(43, 0)
     cur.execute("SELECT INTERVAL '3' YEAR")
-    assert cur.fetchone()[0] == polypheny.interval.IntervalMonth(36)
+    assert cur.fetchone()[0] == IntervalMonthMilliseconds(36, 0)
 
 def test_serialize_null(cur):
     cur.execute('DROP TABLE IF EXISTS t')
