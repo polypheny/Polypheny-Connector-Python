@@ -1,3 +1,4 @@
+import os
 import socket
 
 from polypheny.exceptions import *
@@ -12,10 +13,8 @@ POLYPHENY_API_MINOR = 0
 
 
 class PlainTransport:
-    def __init__(self, address, port):
-        self.address = address
-        self.port = port
-        self.con = socket.create_connection((address, port))
+    def __init__(self, address):
+        self.con = socket.create_connection(address)
 
     def send_msg(self, serialized):
         n = len(serialized)
@@ -39,12 +38,14 @@ class PlainTransport:
 class UnixTransport(PlainTransport):
     def __init__(self, path):
         self.con = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        if path is None:
+            path = os.path.expanduser("~/.polypheny/polypheny-prism.sock")
         self.con.connect(path)
 
 class Connection:
-    def __init__(self, address, port, transport):
-        if transport is None or transport == "plain":
-            self.con = PlainTransport(address, port)
+    def __init__(self, address, transport, kwargs):
+        if transport == "plain":
+            self.con = PlainTransport(address)
         elif transport == "unix":
             self.con = UnixTransport(address)
         else:
@@ -94,8 +95,10 @@ class Connection:
     def connect(self, username, password, auto_commit):
         msg = self.new_request()
         req = msg.connection_request
-        req.username = username
-        req.password = ''
+        if username is not None:
+            req.username = username
+        if password is not None:
+            req.password = password
         req.major_api_version = POLYPHENY_API_MAJOR
         req.minor_api_version = POLYPHENY_API_MINOR
         req.connection_properties.is_auto_commit = auto_commit

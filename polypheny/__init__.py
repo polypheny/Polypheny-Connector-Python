@@ -2,6 +2,7 @@ from polypheny.connection import Connection, Cursor
 from polypheny.exceptions import *
 
 import datetime
+from typing import Union
 
 apilevel = '2.0'
 threadsafety = 0
@@ -48,8 +49,13 @@ def Binary(string):
 # ROWID = 5
 
 
-def connect(address, port, /, username, password, transport=None) -> Connection:
+def connect(address: Union[tuple[str, int], str] = None, *, username: str = None, password: str = None, transport: str = 'unix', **kwargs) -> Connection:
     """
     Connect to a Polypheny instance
+
+    :param address:  A :py:class:`str` for ``unix`` transport or a (hostname, port) :py:class:`tuple` for ``plain`` transport.  :py:class:`None` tries to connect to ``~/.polypheny/polypheny-prism.sock``.
+    :param username:  username
+    :param password:  password
+    :param transport:  Either ``plain`` or ``unix``
     """
-    return Connection(address, port, username, password, transport)
+    return Connection(address, username, password, transport, kwargs)

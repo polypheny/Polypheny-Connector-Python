@@ -93,12 +93,14 @@ def test_fetch_closed_cursor(cur):
 
 def test_invalid_creds():
     with pytest.raises(polypheny.Error):
-        polypheny.connect('127.0.0.1', 20590, 'unknown', '')
+        polypheny.connect(('127.0.0.1', 20590), username='unknown', password='', transport='plain')
 
 def test_invalid_version():
     import polypheny.rpc as rpc
     major = rpc.POLYPHENY_API_MAJOR
-    with pytest.raises(polypheny.Error):
-        rpc.POLYPHENY_API_MAJOR = 1
-        polypheny.connect('127.0.0.1', 20590, 'pa', '')
-    rpc.POLYPHENY_API_MAJOR = major
+    try:
+        with pytest.raises(polypheny.Error):
+            rpc.POLYPHENY_API_MAJOR = 1
+            polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
+    finally:
+        rpc.POLYPHENY_API_MAJOR = major

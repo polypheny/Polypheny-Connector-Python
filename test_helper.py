@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture
 def con(run_polypheny):
-    con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
+    con = polypheny.connect()
     yield con
     con.close()
 

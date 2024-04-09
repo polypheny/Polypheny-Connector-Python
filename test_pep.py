@@ -57,7 +57,7 @@ from test_helper import con, cur, cur_with_data
 #     Returns a Connection_ Object. It takes a number of parameters
 #     which are database dependent. [1]_
 def test_connection():
-    con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
+    con = polypheny.connect()
     assert type(con) == polypheny.Connection
     con.close()
 # 

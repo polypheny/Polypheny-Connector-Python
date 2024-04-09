@@ -37,16 +37,16 @@ yet, follow the instructions here_.
        argv = ['java', '-jar', jar, '-resetCatalog', '-resetDocker']
        store = os.environ.get('POLYPHENY_DEFAULT_STORE', '')
        if store != '':
-           argv.extend(['-defaultStore', store])
+	   argv.extend(['-defaultStore', store])
        process = subprocess.Popen(argv, stdout=subprocess.PIPE, universal_newlines=True)
 
        while True:
-           line = next(process.stdout)
-           if 'Polypheny-DB successfully started' in line:
-               break
+	   line = next(process.stdout)
+	   if 'Polypheny-DB successfully started' in line:
+	       break
 
    import polypheny
-   con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
+   con = polypheny.connect()
    cur = con.cursor()
    cur.execute('DROP TABLE IF EXISTS fruits')
    cur.execute('CREATE TABLE fruits(id INTEGER PRIMARY KEY, name VARCHAR(50)/*TEXT*/ NOT NULL)')
@@ -91,10 +91,10 @@ There are two ways to connect to Polypheny:
     .. testcode::
 
        con = polypheny.connect(
-	   '127.0.0.1',
-	   20590,
+	   ('127.0.0.1', 20590),
 	   username='pa',
 	   password='',
+	   transport='plain',
        )
 
 
@@ -102,10 +102,15 @@ There are two ways to connect to Polypheny:
 
     .. testcode::
 
+       con = polypheny.connect()
+
+    Or passing an explicit path, username and password:
+
+    .. testcode::
+
        import os
        con = polypheny.connect(
-	   os.path.expanduser('~/.polypheny/polypheny-proto.sock'),
-	   None,
+	   os.path.expanduser('~/.polypheny/polypheny-prism.sock'),
 	   username='pa',
 	   password='',
 	   transport='unix',

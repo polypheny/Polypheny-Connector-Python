@@ -7,13 +7,12 @@ from polypheny.exceptions import *
 from polypheny.serialize import *
 
 class Connection:
-    def __init__(self, address, port, username, password, transport):
+    def __init__(self, address, username, password, transport, kwargs):
         self.cursors = set()
         self.con = None  # Needed so destructor works
 
-        # TODO: default to 20590 when no port is given
         try:
-            self.con = rpc.Connection(address, port, transport)
+            self.con = rpc.Connection(address, transport, kwargs)
         except ConnectionRefusedError:
             raise Error("Connection refused") from None
 
