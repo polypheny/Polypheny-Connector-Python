@@ -1,9 +1,15 @@
+import sys
+
 import polypheny
 import pytest
 
 @pytest.fixture
 def con(run_polypheny):
-    con = polypheny.connect()
+    if sys.platform == 'win32':
+        con = polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
+    else:
+        con = polypheny.connect()
+    #con = polypheny.connect(('127.0.0.1', 2020), username='pa', password='', transport='noise', transport_params={'insecure': True})
     yield con
     con.close()
 

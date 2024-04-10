@@ -46,6 +46,13 @@ yet, follow the instructions here_.
 	       break
 
    import polypheny
+   oldconnect = polypheny.connect
+   def connect(address=None, *, username=None, password=None, transport='unix', **kwargs):
+       import sys
+       if transport == 'unix' and sys.platform == 'win32':
+	   return oldconnect(('127.0.0.1', 20590), username='pa', password='', transport='plain', **kwargs)
+       return oldconnect(address, username=username, password=password, transport=transport, **kwargs)
+   polypheny.connect = connect
    con = polypheny.connect()
    cur = con.cursor()
    cur.execute('DROP TABLE IF EXISTS fruits')
