@@ -85,7 +85,7 @@ def proto2py(value):
         minute = int(t/60)
         t = t % 60
         second = int(t)
-        return datetime.time(hour, minute, second, microsecond=int(millis/10))
+        return datetime.time(hour, minute, second, microsecond=int(millis*1000))
     elif name == "timestamp":
         return datetime.datetime.fromtimestamp(value.timestamp.timestamp / 1000, datetime.timezone.utc)
     elif name == "interval":
