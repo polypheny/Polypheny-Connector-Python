@@ -27,17 +27,6 @@ def test_deserialize_null(cur):
     return  # remove if execute works
     assert cur.fetchone()[0] == None
 
-def test_serialize_null_string(cur):
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a VARCHAR(255), PRIMARY KEY(i))')
-    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (None,))
-    with pytest.raises(polypheny.Error):
-        cur.execute('SELECT a FROM t')
-
-    return  # remove if execute works
-    assert cur.fetchone()[0] == None
-    assert cur.fetchone() is None
-
 def test_serialize_varbinary(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     with pytest.raises(polypheny.Error):

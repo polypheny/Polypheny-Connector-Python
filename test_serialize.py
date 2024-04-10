@@ -163,6 +163,15 @@ def test_deserialize_string(cur):
     cur.execute("SELECT 'Hello World'")
     assert cur.fetchone()[0] == 'Hello World'
 
+def test_serialize_null_string(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a VARCHAR(255), PRIMARY KEY(i))')
+    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (None,))
+    cur.execute('SELECT a FROM t')
+
+    assert cur.fetchone()[0] == None
+    assert cur.fetchone() is None
+
 def test_trailing_semicolon(cur):
     cur.execute("SELECT 1;")
 
