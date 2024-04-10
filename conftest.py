@@ -40,7 +40,7 @@ def add_cur(run_polypheny, request, doctest_namespace):
         yield
         return
 
-    con = polypheny.connect('127.0.0.1', 20590, username='pa', password='')
+    con = polypheny.connect()
     cur = con.cursor()
     cur.execute('DROP TABLE IF EXISTS fruits')
     cur.execute('CREATE TABLE fruits(id INTEGER PRIMARY KEY, name VARCHAR(50)/*TEXT*/ NOT NULL)')
