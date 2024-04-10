@@ -86,19 +86,7 @@ Connect to Polypheny
 
 There are two ways to connect to Polypheny:
 
- 1. Unencrypted over the network:
-
-    .. testcode::
-
-       con = polypheny.connect(
-	   ('127.0.0.1', 20590),
-	   username='pa',
-	   password='',
-	   transport='plain',
-       )
-
-
- 2. Locally via Unix sockets:
+ 1. Locally via Unix sockets (only Linux, BSD, macOS):
 
     .. testcode::
 
@@ -121,6 +109,17 @@ There are two ways to connect to Polypheny:
        If the user running the Python script has the same username as
        a database user, the user will automatically be logged in as that
        user and username and password are ignored.
+
+ 2. Unencrypted over the network (all systems):
+
+    .. testcode::
+
+       con = polypheny.connect(
+	   ('127.0.0.1', 20590),
+	   username='pa',
+	   password='',
+	   transport='plain',
+       )
 
 Executing a query
 ^^^^^^^^^^^^^^^^^
