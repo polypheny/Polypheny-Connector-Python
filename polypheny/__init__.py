@@ -2,7 +2,7 @@ from polypheny.connection import Connection, Cursor
 from polypheny.exceptions import *
 
 import datetime
-from typing import Union
+from typing import Union, Tuple
 
 apilevel = '2.0'
 threadsafety = 0
@@ -49,7 +49,8 @@ def Binary(string):
 # ROWID = 5
 
 
-def connect(address: Union[tuple[str, int], str] = None, *, username: str = None, password: str = None, transport: str = 'unix', **kwargs) -> Connection:
+# TODO: Change Tuple to tuple when Python 3.8 is no longer supported
+def connect(address: Union[Tuple[str, int], str] = None, *, username: str = None, password: str = None, transport: str = 'unix', **kwargs) -> Connection:
     """
     Connect to a Polypheny instance
 

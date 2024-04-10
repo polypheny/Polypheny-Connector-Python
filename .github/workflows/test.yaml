@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        version: ['3.8', '3.9', '3.10', '3.11', '3.12'] # TODO: When dropping 3.8, adjust type hints for polypheny.connect
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     needs: build-polypheny
