@@ -1,7 +1,7 @@
 import os
 import socket
 
-from polypheny.exceptions import *
+from polypheny.exceptions import Error
 from polypheny.serialize import *
 from polyprism import protointerface_pb2
 from polyprism import statement_requests_pb2
@@ -35,12 +35,14 @@ class PlainTransport:
             self.con.close()
             self.con = None
 
+
 class UnixTransport(PlainTransport):
     def __init__(self, path):
         self.con = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         if path is None:
             path = os.path.expanduser("~/.polypheny/polypheny-prism.sock")
         self.con.connect(path)
+
 
 class Connection:
     def __init__(self, address, transport, kwargs):
@@ -158,6 +160,8 @@ class Connection:
         req = msg.execute_indexed_statement_request
         req.statement_id = statement_id
         req.parameters.parameters.extend(list(map(py2proto, params)))
+        if fetch_size:
+            req.fetch_size = fetch_size
         return self.call(msg).statement_result
 
     def prepare_named_statement(self, language_name, statement, namespace):
@@ -173,6 +177,8 @@ class Connection:
         msg = self.new_request()
         req = msg.execute_named_statement_request
         req.statement_id = statement_id
+        if fetch_size:
+            req.fetch_size = fetch_size
         for k, v in params.items():
             py2proto(v, req.parameters.parameters[k])
         return self.call(msg).statement_result

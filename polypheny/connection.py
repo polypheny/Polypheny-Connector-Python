@@ -1,10 +1,10 @@
-import datetime
-from typing import Union, List, Any, Dict
+from typing import List, Any
 
 from polyprism import relational_frame_pb2
 from polypheny import rpc
 from polypheny.exceptions import *
 from polypheny.serialize import *
+
 
 class Connection:
     def __init__(self, address, username, password, transport, kwargs):
@@ -83,10 +83,9 @@ class Connection:
 
         try:
             self.rollback()
-        except:
-            pass
-        self.con.close()
-        self.con = None
+        finally:
+            self.con.close()
+            self.con = None
 
 
 class ResultCursor:
@@ -117,13 +116,12 @@ class ResultCursor:
         assert self.con.con is not None
         try:
             self.con.con.close_statement(self.statement_id)
-        except Exception:
-            pass
-        self.con = None
-        self.closed = True
+        finally:
+            self.con = None
+            self.closed = True
 
     def __next__(self):
-        # frame is None when there where no results
+        # frame is None when there were no results
         if self.frame is None:
             raise Error("Previous statement did not produce any results")
 
@@ -257,7 +255,6 @@ class Cursor:
             frame = None
 
         self.result = ResultCursor(self.con, statement_id, frame, fetch_size)
-
 
     def fetchone(self):
         if self.con is None:

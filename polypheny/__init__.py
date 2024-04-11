@@ -50,7 +50,8 @@ def Binary(string):
 
 
 # TODO: Change Tuple to tuple when Python 3.8 is no longer supported
-def connect(address: Union[Tuple[str, int], str] = None, *, username: str = None, password: str = None, transport: str = 'unix', **kwargs) -> Connection:
+def connect(address: Union[Tuple[str, int], str] = None, *, username: str = None, password: str = None,
+            transport: str = 'unix', **kwargs) -> Connection:
     """
     Connect to a Polypheny instance
 
