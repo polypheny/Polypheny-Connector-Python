@@ -148,7 +148,7 @@ def test_serialize_list(cur):
     assert cur.fetchone() is None
 
 def test_deserialize_number(cur):
-    cur.execute('SELECT 1') # TODO: This seems to return a big decimal.  Very inefficient...
+    cur.execute('SELECT 1')
     assert cur.fetchone()[0] == 1
 
 def test_deserialize_float(cur):
@@ -156,7 +156,7 @@ def test_deserialize_float(cur):
     assert cur.fetchone()[0] == 0.05
 
 def test_deserialize_real(cur):
-    cur.execute('SELECT 0.05') # TODO: Again a big decimal, but is it wrong?
+    cur.execute('SELECT 0.05')
     assert cur.fetchone()[0] == 0.05
 
 def test_deserialize_string(cur):

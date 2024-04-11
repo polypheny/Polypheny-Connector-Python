@@ -182,7 +182,6 @@ class Cursor:
     def derive_description(self, relframe):
         self.description = []
         for column in relframe.column_meta:
-            # TODO: Should we even bother with precision/scale/nullable?
             self.description.append(
                 (column.column_label, None, None, None, None, column.precision, column.scale, column.is_nullable))
 
