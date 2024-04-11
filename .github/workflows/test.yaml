@@ -203,7 +203,7 @@ jobs:
         working-directory: main/docs
 
   build-docs:
-    timeout-minutes: 5
+    timeout-minutes: 2
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@v5
