@@ -21,8 +21,8 @@ def test_serialize_number(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a BIGINT NOT NULL, PRIMARY KEY(i))')
     ints = {1, 2**42, -1, (2**63)-1, -2**63}
-    for i in ints:
-        cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (i,))
+    for n, i in enumerate(ints):
+        cur.execute('INSERT INTO t(i, a) VALUES (?, ?)', (n, i,))
     cur.execute('SELECT a FROM t')
     res = set(map(lambda x: x[0], cur.fetchall()))
     assert ints == res
