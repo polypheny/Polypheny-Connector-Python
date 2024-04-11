@@ -28,11 +28,10 @@ def test_serialize_number(cur):
     assert ints == res
 
 def test_serialize_decimal_local():
-    pytest.skip('Needs correct float comparison')
     decimals = {2**64, -2**64, 0, 0.49, 0.5, 0.51, -0.49, -0.5, -0.51}
     for d in decimals:
         d = decimal.Decimal(d)
-        assert polypheny.serialize.proto2py(polypheny.serialize.py2proto(d)) == float(d)
+        assert polypheny.serialize.proto2py(polypheny.serialize.py2proto(d)) == d
 
 def test_serialize_floats(cur):
     cur.execute('DROP TABLE IF EXISTS t')
@@ -172,11 +171,16 @@ def test_serialize_null_string(cur):
     assert cur.fetchone()[0] == None
     assert cur.fetchone() is None
 
+def test_serialize_not_implemented(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a ARRAY, PRIMARY KEY(i))')
+    with pytest.raises(NotImplementedError):
+        cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', ({'a': 'b'},))
+
 def test_trailing_semicolon(cur):
     cur.execute("SELECT 1;")
 
-def test_fail_with_superfluous_param(cur):
-    pytest.skip("Fails")
+def test_with_superfluous_param(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a BOOLEAN)')
     cur.execute('INSERT INTO t(id, a) VALUES (0, ?)', (True,))
