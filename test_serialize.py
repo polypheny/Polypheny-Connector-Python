@@ -29,8 +29,7 @@ def test_serialize_number(cur):
 
 def test_serialize_decimal_local():
     decimals = {2**64, -2**64, 0, 0.49, 0.5, 0.51, -0.49, -0.5, -0.51}
-    for d in decimals:
-        d = decimal.Decimal(d)
+    for d in map(decimal.Decimal, decimals):
         assert polypheny.serialize.proto2py(polypheny.serialize.py2proto(d)) == d
 
 def test_serialize_floats(cur):
@@ -46,9 +45,8 @@ def test_serialize_floats(cur):
 def test_serialize_decimal(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DECIMAL(2, 2) NOT NULL, PRIMARY KEY(i))')
-    decimals = {0, 0.49, 0.5, 0.51, -0.49, -0.5, -0.51}
-    for i, d in enumerate(decimals):
-        d = decimal.Decimal(d)
+    decimals = {'0', '0.49', '0.5', '0.51', '-0.49', '-0.5', '-0.51'}
+    for i, d in enumerate(map(decimal.Decimal, decimals)):
         cur.execute('INSERT INTO t(i, a) VALUES (?, ?)', (i, d,))
         cur.execute('SELECT a FROM t WHERE i = ?', (i,))
         assert cur.fetchone()[0] == d
@@ -152,11 +150,11 @@ def test_deserialize_number(cur):
 
 def test_deserialize_float(cur):
     cur.execute('SELECT CAST(0.05 AS FLOAT)')
-    assert cur.fetchone()[0] == 0.05
+    assert cur.fetchone()[0] == decimal.Decimal('0.05')
 
 def test_deserialize_real(cur):
     cur.execute('SELECT 0.05')
-    assert cur.fetchone()[0] == 0.05
+    assert cur.fetchone()[0] == decimal.Decimal('0.05')
 
 def test_deserialize_string(cur):
     cur.execute("SELECT 'Hello World'")
