@@ -138,7 +138,7 @@ def test_serialize_null(cur):
 
 def test_serialize_list(cur):
     cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a ARRAY, PRIMARY KEY(i))')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a INTEGER ARRAY(1, 3), PRIMARY KEY(i))')
     cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', ([1, 2, 3],))
     cur.execute('SELECT a FROM t')
     assert cur.fetchone()[0] == [1, 2, 3]
@@ -171,7 +171,7 @@ def test_serialize_null_string(cur):
 
 def test_serialize_not_implemented(cur):
     cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a ARRAY, PRIMARY KEY(i))')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a INTEGER, PRIMARY KEY(i))')
     with pytest.raises(NotImplementedError):
         cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', ({'a': 'b'},))
 
