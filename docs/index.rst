@@ -47,9 +47,9 @@ yet, follow the instructions here_.
 
    import polypheny
    oldconnect = polypheny.connect
-   def connect(address=None, *, username=None, password=None, transport='unix', **kwargs):
+   def connect(address=None, *, username=None, password=None, transport=None, **kwargs):
        import sys
-       if transport == 'unix' and sys.platform == 'win32':
+       if address == None and transport == None and sys.platform == 'win32':
 	   return oldconnect(('127.0.0.1', 20590), username='pa', password='', transport='plain', **kwargs)
        return oldconnect(address, username=username, password=password, transport=transport, **kwargs)
    polypheny.connect = connect

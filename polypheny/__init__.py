@@ -65,7 +65,7 @@ def connect(address: Union[Tuple[str, int], str] = None, *, username: str = None
     """
     if address is None and transport is None and username is None and password is None and len(kwargs) == 0:
         transport = 'unix'
-    else:
+    elif address is None or transport is None:
         raise Error("Address and transport must be given")
 
     return Connection(address, username, password, transport, kwargs)
