@@ -51,13 +51,21 @@ def Binary(string):
 
 # TODO: Change Tuple to tuple when Python 3.8 is no longer supported
 def connect(address: Union[Tuple[str, int], str] = None, *, username: str = None, password: str = None,
-            transport: str = 'unix', **kwargs) -> Connection:
+            transport: str = None, **kwargs) -> Connection:
     """
-    Connect to a Polypheny instance
+    Connect to a Polypheny instance with the given parameters.  When
+    no parameters are given, the driver will connect via the ``unix``
+    transport to ``~/.polypheny/polypheny-prism.sock``.
 
-    :param address:  A :py:class:`str` for ``unix`` transport or a (hostname, port) :py:class:`tuple` for ``plain`` transport.  :py:class:`None` tries to connect to ``~/.polypheny/polypheny-prism.sock``.
+    :param address:  A :py:class:`str` for ``unix`` transport or a (hostname, port) :py:class:`tuple` for ``plain`` transport.
     :param username:  username
     :param password:  password
     :param transport:  Either ``plain`` or ``unix``
+
     """
+    if address is None and transport is None and username is None and password is None and len(kwargs) == 0:
+        transport = 'unix'
+    else:
+        raise Error("Address and transport must be given")
+
     return Connection(address, username, password, transport, kwargs)

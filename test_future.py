@@ -14,12 +14,6 @@ def test_cypher(cur_with_data):
         cur.executeany('cypher', 'MATCH (e:customers) WHERE e.id = 1 RETURN e.name')
         assert cur.fetchone()[0] == 'Maria'
 
-def test_pig(cur_with_data):
-    pytest.skip("Causes a hang on Polypheny side")
-    cur = cur_with_data
-    cur.executeany('pig', "A = LOAD 'customers'; B = FILTER A BY id == 1; DUMP B;")
-    assert cur.fetchone()[0] == 'Maria'
-
 def test_deserialize_null(cur):
     with pytest.raises(polypheny.Error):
         cur.execute("SELECT NULL")
