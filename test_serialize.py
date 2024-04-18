@@ -169,6 +169,20 @@ def test_serialize_null_string(cur):
     assert cur.fetchone()[0] == None
     assert cur.fetchone() is None
 
+def test_deserialize_null(cur):
+    cur.execute("SELECT NULL")
+
+    assert cur.fetchone()[0] == None
+
+def test_serialize_varbinary(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a BINARY VARYING NOT NULL, PRIMARY KEY(i))')
+
+    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (b'Hello World',))
+    cur.execute('SELECT a FROM t')
+    assert cur.fetchone()[0] == b'Hello World'
+    assert cur.fetchone() is None
+
 def test_serialize_not_implemented(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a INTEGER, PRIMARY KEY(i))')

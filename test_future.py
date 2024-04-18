@@ -14,24 +14,6 @@ def test_cypher(cur_with_data):
         cur.executeany('cypher', 'MATCH (e:customers) WHERE e.id = 1 RETURN e.name')
         assert cur.fetchone()[0] == 'Maria'
 
-def test_deserialize_null(cur):
-    with pytest.raises(polypheny.Error):
-        cur.execute("SELECT NULL")
-
-    return  # remove if execute works
-    assert cur.fetchone()[0] == None
-
-def test_serialize_varbinary(cur):
-    cur.execute('DROP TABLE IF EXISTS t')
-    with pytest.raises(polypheny.Error):
-        cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a BINARY VARYING NOT NULL, PRIMARY KEY(i))')
-
-    return  # remove if execute works
-    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (b'Hello World',))
-    cur.execute('SELECT a FROM t')
-    assert cur.fetchone()[0] == b'Hello World'
-    assert cur.fetchone() is None
-
 def test_insert_double(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
