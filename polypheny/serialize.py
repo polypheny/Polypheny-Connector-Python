@@ -59,9 +59,12 @@ def py2proto(value, v=None):
 def parse_big_decimal(value):
     raw = value.unscaled_value
     scale = value.scale
-    with decimal.localcontext() as ctx:
-        ctx.prec = decimal.MAX_PREC
-        return decimal.Decimal(int.from_bytes(raw, byteorder='big', signed=True)) * decimal.Decimal(10) ** -scale
+    n = int.from_bytes(raw, byteorder='big', signed=True)
+    sign = 0
+    if n < 0:
+        sign = 1
+        n = -n
+    return decimal.Decimal((sign, tuple(map(int, str(n))), -scale))
 
 
 def proto2py(value):
