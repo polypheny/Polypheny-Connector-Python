@@ -18,7 +18,7 @@ class PlainTransport:
     def __init__(self, address):
         self.con = socket.create_connection(address)
         self.con.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        self.prologue = self.exchange_version(version or self.VERSION)
+        self.exchange_version(self.VERSION)
 
     def exchange_version(self, version):
         bl = self.con.recv(1)
