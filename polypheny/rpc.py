@@ -13,8 +13,28 @@ POLYPHENY_API_MINOR = 0
 
 
 class PlainTransport:
+    VERSION = "plain-v1@polypheny.com"
+
     def __init__(self, address):
         self.con = socket.create_connection(address)
+        self.exchange_version(self.VERSION)
+
+    def exchange_version(self, version):
+        bl = self.con.recv(1)
+        if len(bl) != 1:
+            raise EOFError
+        n = int.from_bytes(bl, byteorder='little')
+        if n > 127:
+            raise Error("Invalid verion length")
+        remote_version = self.con.recv(n)
+        if remote_version[-1] != 0x0a:
+            raise Error("Invalid verion message")
+
+        if remote_version[0:-1] != version.encode():
+            s = remote_version.decode()
+            raise Error(f"Unsupported version: {repr(remote_version)} expected {version.encode()}")
+
+        self.con.sendall(bl + remote_version)
 
     def send_msg(self, serialized):
         n = len(serialized)
@@ -37,11 +57,14 @@ class PlainTransport:
 
 
 class UnixTransport(PlainTransport):
+    VERSION = "unix-v1@polypheny.com"
+
     def __init__(self, path):
         self.con = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         if path is None:
             path = os.path.expanduser("~/.polypheny/polypheny-prism.sock")
         self.con.connect(path)
+        self.exchange_version(self.VERSION)
 
 
 class Connection:
