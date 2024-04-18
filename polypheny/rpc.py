@@ -32,8 +32,7 @@ class PlainTransport:
             raise Error("Invalid verion message")
 
         if remote_version[0:-1] != version.encode():
-            s = remote_version.decode()
-            raise Error(f"Unsupported version: {repr(remote_version)} expected {version.encode()}")
+            raise Error(f"Unsupported version: {repr(remote_version[0:-1])} expected {version.encode()}")
 
         self.con.sendall(bl + remote_version)
 
