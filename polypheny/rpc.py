@@ -17,7 +17,8 @@ class PlainTransport:
 
     def __init__(self, address):
         self.con = socket.create_connection(address)
-        self.exchange_version(self.VERSION)
+        self.con.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        self.prologue = self.exchange_version(version or self.VERSION)
 
     def exchange_version(self, version):
         bl = self.con.recv(1)
@@ -39,8 +40,7 @@ class PlainTransport:
     def send_msg(self, serialized):
         n = len(serialized)
         bl = n.to_bytes(length=8, byteorder='little')
-        self.con.sendall(bl)
-        self.con.sendall(serialized)
+        self.con.sendall(bl + serialized)
 
     def recv_msg(self):
         bl = self.con.recv(8)
