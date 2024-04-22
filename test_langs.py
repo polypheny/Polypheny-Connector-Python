@@ -1,5 +1,6 @@
 import polypheny
 import pytest
+import sys
 
 from test_helper import con, cur, cur_with_data
 
