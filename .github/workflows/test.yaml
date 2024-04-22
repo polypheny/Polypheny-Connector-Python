@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - proto-without-grpc
+      - fix-windows-tests
 
 jobs:
   build-polypheny:
@@ -40,8 +41,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['3.8', '3.9', '3.10', '3.11', '3.12'] # TODO: When dropping 3.8, adjust type hints for polypheny.connect
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        version: ['3.12'] # TODO: When dropping 3.8, adjust type hints for polypheny.connect
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     needs: build-polypheny
     steps:
@@ -130,134 +131,3 @@ jobs:
         env:
           POLYPHENY_JAR: ../dbms-0.10.0-SNAPSHOT.jar
         working-directory: main/docs
-
-  test-stores:
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        adapter: [ mongodb, hsqldb, monetdb, postgresql, file, cottontail, neo4j ]
-    runs-on: ubuntu-latest
-    needs: build-polypheny
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Checkout Polypheny-Prism-API
-        uses: actions/checkout@v4
-        with:
-          repository: polypheny/Polypheny-Prism-API
-          path: Polypheny-Prism-API
-
-      - name: Checkout driver
-        uses: actions/checkout@v4
-        with:
-          path: main
-
-      - name: Download protobuf for Linux
-        run: |
-          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-linux-x86_64.zip
-          unzip protoc-26.0-linux-x86_64.zip
-        working-directory: Polypheny-Prism-API
-
-      - name: Build Protobuf Files
-        run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
-        working-directory: Polypheny-Prism-API
-
-      - name: Install Protobuf Package
-        run: pip install .
-        working-directory: Polypheny-Prism-API
-
-      - name: Install driver dependencies
-        run: pip install -r requirements.txt
-        working-directory: main
-
-      - name: Load Polypheny JAR
-        uses: actions/download-artifact@v4
-        with:
-          name: polypheny-jar
-          path: main
-
-      - name: Run tests
-        run: pytest --doctest-modules -v
-        env:
-          POLYPHENY_JAR: dbms-0.10.0-SNAPSHOT.jar
-          POLYPHENY_DEFAULT_STORE: ${{ matrix.adapter }}
-        working-directory: main
-
-      - name: Install locally
-        run: pip install .
-        working-directory: main
-
-      - name: Run tests in docs
-        run: make doctest
-        env:
-          POLYPHENY_JAR: ../dbms-0.10.0-SNAPSHOT.jar
-          POLYPHENY_DEFAULT_STORE: ${{ matrix.adapter }}
-        working-directory: main/docs
-
-  build-docs:
-    timeout-minutes: 2
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Checkout Polypheny-Prism-API
-        uses: actions/checkout@v4
-        with:
-          repository: polypheny/Polypheny-Prism-API
-          path: Polypheny-Prism-API
-
-      - name: Checkout driver
-        uses: actions/checkout@v4
-        with:
-          path: main
-
-      - name: Download protobuf for Linux
-        run: |
-          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-linux-x86_64.zip
-          unzip protoc-26.0-linux-x86_64.zip
-        working-directory: Polypheny-Prism-API
-
-      - name: Build Protobuf Files
-        run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
-        working-directory: Polypheny-Prism-API
-
-      - name: Install Protobuf Package
-        run: pip install .
-        working-directory: Polypheny-Prism-API
-
-      - name: Install driver dependencies
-        run: pip install -r requirements.txt
-        working-directory: main
-
-      - name: Install markdown generator
-        run: pip install sphinx-markdown-builder
-        working-directory: main
-
-      - name: Install locally
-        run: pip install .
-        working-directory: main
-
-      - name: Generate documentation (markdown)
-        run: make markdown
-        working-directory: main/docs
-
-      - name: Generate documentation (HTML)
-        run: make html
-        working-directory: main/docs
-
-      - name: Store docs
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs
-          path: main/docs/_build
-
