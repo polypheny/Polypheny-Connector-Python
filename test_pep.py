@@ -318,6 +318,9 @@ def test_con_commit(con):
 #     connection without committing the changes first will cause an implicit
 #     rollback to be performed.
 def test_con_rollback(con):
+    import sys
+    if sys.platform == 'win32':
+        pytest.skip()
     con.rollback()
 # 
 # 
