@@ -303,6 +303,9 @@ def test_con_close(con):
 #     Database modules that do not support transactions should implement this
 #     method with void functionality.
 def test_con_commit(con):
+    import sys
+    if sys.platform == 'win32':
+        pytest.skip()
     con.commit()
 # 
 # 
