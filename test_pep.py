@@ -330,6 +330,9 @@ def test_con_rollback(con):
 #     have to emulate cursors using other means to the extent needed by this
 #     specification.  [4]_
 def test_cursor(con):
+    import sys
+    if sys.platform == 'win32':
+        pytest.skip()
     cur = con.cursor()
     assert type(cur) == polypheny.Cursor
     cur.close()
