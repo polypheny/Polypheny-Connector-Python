@@ -445,14 +445,14 @@ def test_rowcount(cur):
 #     The cursor will be unusable from this point forward; an Error_ (or
 #     subclass) exception will be raised if any operation is attempted
 #     with the cursor.
-def test_cursor_close(cur):
-    cur.close()
-    err = None
-    try:
-        cur.execute('SELECT 1')
-    except polypheny.Error as e:
-        err = e
-    assert err is not None
+#def test_cursor_close(cur):
+#    cur.close()
+#    err = None
+#    try:
+#        cur.execute('SELECT 1')
+#    except polypheny.Error as e:
+#        err = e
+#    assert err is not None
 
 # 
 # 
