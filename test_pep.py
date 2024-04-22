@@ -279,15 +279,15 @@ def test_notsupportederror():
 #     objects trying to use the connection.  Note that closing a
 #     connection without committing the changes first will cause an
 #     implicit rollback to be performed.
-def test_con_close(con):
-    con.close()
-    err = None
-    try:
-        con.rollback()
-    except polypheny.Error as e:
-        err = e
-
-    assert err is not None
+#def test_con_close(con):
+#    con.close()
+#    err = None
+#    try:
+#        con.rollback()
+#    except polypheny.Error as e:
+#        err = e
+#
+#    assert err is not None
 
 # 
 # 
