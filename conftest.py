@@ -5,17 +5,23 @@ import sys
 import pytest
 import polypheny
 
-@pytest.fixture(scope='session', autouse=True)
-def run_polypheny():
-    jar = os.environ.get('POLYPHENY_JAR', '')
+class Polypheny:
+    def __init__(self):
+        self.jar = os.environ.get('POLYPHENY_JAR', None)
+        self.defaultStore = os.environ.get('POLYPHENY_DEFAULT_STORE', None)
 
-    process = None
-    if jar != '':
-        argv = ['java', '-jar', jar, '-resetCatalog', '-resetDocker']
-        store = os.environ.get('POLYPHENY_DEFAULT_STORE', '')
-        if store != '':
+        self.argv = ['java', '-jar', jar, '-resetCatalog', '-resetDocker']
+        if store is not None:
             argv.extend(['-defaultStore', store])
-        process = subprocess.Popen(argv, stdout=subprocess.PIPE, universal_newlines=True)
+
+        self.process = None
+        self.count = 0
+
+    def start(self):
+        if self.jar is None:
+            return
+
+        self.process = subprocess.Popen(self.argv, stdout=subprocess.PIPE, universal_newlines=True)
         lines = []
         while True:
             try:
@@ -28,10 +34,29 @@ def run_polypheny():
             if 'Polypheny-DB successfully started' in line:
                 break
 
-    yield process
+    def stop(self):
+        if self.process is not None:
+            self.process.terminate()
+            self.process = None
 
-    if process is not None:
-        process.terminate()
+    def restart(self):
+        self.stop()
+        self.start()
+
+    def used(self):
+        self.count += 1
+        if self.count % 10 == 0:
+            self.restart()
+
+@pytest.fixture(scope='session', autouse=True)
+def run_polypheny():
+    p = Polypheny()
+
+    p.start()
+
+    yield p
+
+    p.stop()
 
 @pytest.fixture(scope='function', autouse=True)
 def add_cur(run_polypheny, request, doctest_namespace):
