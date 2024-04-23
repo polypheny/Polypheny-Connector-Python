@@ -37,7 +37,7 @@ jobs:
           path: dbms/build/libs/dbms-0.10.0-SNAPSHOT.jar
 
   test-system-python:
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
