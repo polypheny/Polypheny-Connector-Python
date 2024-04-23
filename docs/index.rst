@@ -40,7 +40,7 @@ yet, follow the instructions here_.
        if store != '':
 	   argv.extend(['-defaultStore', store])
        if sys.platform == 'win32':
-            self.argv.extend(['-noAutoDocker'])
+            argv.extend(['-noAutoDocker'])
 
        process = subprocess.Popen(argv, stdout=subprocess.PIPE, universal_newlines=True)
 
