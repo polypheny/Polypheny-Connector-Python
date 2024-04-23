@@ -31,6 +31,7 @@ yet, follow the instructions here_.
 
    import os
    import subprocess
+   import sys
 
    jar = os.environ.get('POLYPHENY_JAR', '')
    if jar:
