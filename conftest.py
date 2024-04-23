@@ -11,8 +11,8 @@ class Polypheny:
         self.defaultStore = os.environ.get('POLYPHENY_DEFAULT_STORE', None)
 
         self.argv = ['java', '-jar', self.jar, '-resetCatalog', '-resetDocker']
-        if store is not None:
-            argv.extend(['-defaultStore', store])
+        if self.defaultStore is not None:
+            argv.extend(['-defaultStore', self.defaultStore])
 
         self.process = None
         self.count = 0
