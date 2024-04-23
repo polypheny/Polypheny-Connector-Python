@@ -27,8 +27,6 @@ def test_insert_double(cur):
     assert cur.fetchone() == [2, 3]
 
 def test_dynamic_text_parameter(cur):
-    if sys.platform == 'win32':
-        pytest.skip()
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TEXT NOT NULL, PRIMARY KEY(i))')
     with pytest.raises(polypheny.Error):

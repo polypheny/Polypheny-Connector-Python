@@ -284,17 +284,16 @@ def test_notsupportederror():
 #     objects trying to use the connection.  Note that closing a
 #     connection without committing the changes first will cause an
 #     implicit rollback to be performed.
-#def test_con_close(con):
-#    con.close()
-#    err = None
-#    try:
-#        con.rollback()
-#    except polypheny.Error as e:
-#        err = e
-#
-#    assert err is not None
+def test_con_close(con):
+    con.close()
+    err = None
+    try:
+        con.rollback()
+    except polypheny.Error as e:
+        err = e
 
-# 
+    assert err is not None
+
 # 
 # .. _.commit:
 # .. _.commit():
@@ -307,12 +306,9 @@ def test_notsupportederror():
 # 
 #     Database modules that do not support transactions should implement this
 #     method with void functionality.
-#def test_con_commit(con):
-#    import sys
-#    if sys.platform == 'win32':
-#        pytest.skip()
-#    con.commit()
-# 
+def test_con_commit(con):
+    con.commit()
+
 # 
 # .. _.rollback:
 # .. _.rollback():
@@ -325,12 +321,9 @@ def test_notsupportederror():
 #     database to roll back to the start of any pending transaction.  Closing a
 #     connection without committing the changes first will cause an implicit
 #     rollback to be performed.
-#def test_con_rollback(con):
-#    import sys
-#    if sys.platform == 'win32':
-#        pytest.skip()
-#    con.rollback()
-# 
+def test_con_rollback(con):
+    con.rollback()
+
 # 
 # .. _.cursor:
 # 
@@ -341,9 +334,6 @@ def test_notsupportederror():
 #     have to emulate cursors using other means to the extent needed by this
 #     specification.  [4]_
 def test_cursor(con):
-    import sys
-    if sys.platform == 'win32':
-        pytest.skip()
     cur = con.cursor()
     assert type(cur) == polypheny.Cursor
     cur.close()
@@ -450,14 +440,14 @@ def test_rowcount(cur):
 #     The cursor will be unusable from this point forward; an Error_ (or
 #     subclass) exception will be raised if any operation is attempted
 #     with the cursor.
-#def test_cursor_close(cur):
-#    cur.close()
-#    err = None
-#    try:
-#        cur.execute('SELECT 1')
-#    except polypheny.Error as e:
-#        err = e
-#    assert err is not None
+def test_cursor_close(cur):
+    cur.close()
+    err = None
+    try:
+        cur.execute('SELECT 1')
+    except polypheny.Error as e:
+        err = e
+    assert err is not None
 
 # 
 # 
