@@ -37,6 +37,7 @@ class Polypheny:
     def stop(self):
         if self.process is not None:
             self.process.terminate()
+            self.process.wait()
             self.process = None
 
     def restart(self):
