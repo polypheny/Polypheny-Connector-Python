@@ -55,6 +55,8 @@ yet, follow the instructions here_.
        import sys
        if address == None and transport == None and sys.platform == 'win32':
 	   return oldconnect(('127.0.0.1', 20590), username='pa', password='', transport='plain', **kwargs)
+       elif transport == 'unix' and sys.platform == 'win32':
+           return None
        return oldconnect(address, username=username, password=password, transport=transport, **kwargs)
    polypheny.connect = connect
    con = polypheny.connect()
