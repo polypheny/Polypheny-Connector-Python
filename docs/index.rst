@@ -38,6 +38,9 @@ yet, follow the instructions here_.
        store = os.environ.get('POLYPHENY_DEFAULT_STORE', '')
        if store != '':
 	   argv.extend(['-defaultStore', store])
+       if sys.platform == 'win32':
+            self.argv.extend(['-noAutoDocker'])
+
        process = subprocess.Popen(argv, stdout=subprocess.PIPE, universal_newlines=True)
 
        while True:

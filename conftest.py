@@ -12,7 +12,9 @@ class Polypheny:
 
         self.argv = ['java', '-jar', self.jar, '-resetCatalog', '-resetDocker']
         if self.defaultStore is not None:
-            argv.extend(['-defaultStore', self.defaultStore])
+            self.argv.extend(['-defaultStore', self.defaultStore])
+        if sys.platform == 'win32':
+            self.argv.extend(['-noAutoDocker'])
 
         self.process = None
         self.count = 0
