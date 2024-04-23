@@ -25,7 +25,7 @@ class Polypheny:
         lines = []
         while True:
             try:
-                line = next(process.stdout).strip()
+                line = next(self.process.stdout).strip()
             except StopIteration:
                 print(lines)
                 break
