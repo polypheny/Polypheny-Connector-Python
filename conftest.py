@@ -54,6 +54,7 @@ def run_polypheny():
             except polypheny.Error as e:
                 if 'Connection refused' not in str(e):
                     break
+                raise RuntimeError(e)
     else:
         p = Polypheny()
         p.start()
