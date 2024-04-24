@@ -47,7 +47,8 @@ class Polypheny:
         self.start()
 
     def used(self):
-        self.restart()
+        pass
+        #self.restart()
 
 @pytest.fixture(scope='session', autouse=True)
 def run_polypheny():
