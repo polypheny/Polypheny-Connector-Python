@@ -13,8 +13,6 @@ class Polypheny:
         self.argv = ['java', '-jar', self.jar, '-resetCatalog', '-resetDocker']
         if self.defaultStore is not None:
             self.argv.extend(['-defaultStore', self.defaultStore])
-        if sys.platform == 'win32':
-            self.argv.extend(['-noAutoDocker'])
 
         self.process = None
         self.count = 0
@@ -46,19 +44,21 @@ class Polypheny:
         self.stop()
         self.start()
 
-    def used(self):
-        pass
-        #self.restart()
-
 @pytest.fixture(scope='session', autouse=True)
 def run_polypheny():
-    p = Polypheny()
-
-    p.start()
-
-    yield p
-
-    p.stop()
+    if sys.platform == 'win32':
+        while True:
+            try:
+                con = polypheny.connect(("127.0.0.1", 20590), username='pa', password='', transport='plain')
+                break
+            except polypheny.Error as e:
+                if 'Connection refused' not in str(e):
+                    break
+    else:
+        p = Polypheny()
+        p.start()
+        yield p
+        p.stop()
 
 @pytest.fixture(scope='function', autouse=True)
 def add_cur(run_polypheny, request, doctest_namespace):

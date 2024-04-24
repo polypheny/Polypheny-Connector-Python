@@ -116,6 +116,11 @@ jobs:
           name: polypheny-jar
           path: main
 
+      - name: Start Polypheny
+        run: java -jar dbms-0.10.0-SNAPSHOT.jar &
+        with:
+          path: main
+
       - name: Run tests
         run: pytest --doctest-modules -v
         env:
