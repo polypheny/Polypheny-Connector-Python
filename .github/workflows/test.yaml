@@ -117,7 +117,7 @@ jobs:
           path: main
 
       - name: Start Polypheny
-        run: java -jar dbms-0.10.0-SNAPSHOT.jar
+        run: java -jar dbms-0.10.0-SNAPSHOT.jar &
         working-directory: main
 
       - name: Run tests
