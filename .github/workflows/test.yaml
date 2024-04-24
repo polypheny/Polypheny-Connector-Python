@@ -63,7 +63,8 @@ jobs:
 
       - name: Checkout driver
         uses: actions/checkout@v4
-        working-directory: main
+        with:
+          path: main
 
       - name: Download protobuf for Linux
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
@@ -116,9 +117,8 @@ jobs:
           path: main
 
       - name: Start Polypheny
-        run: java -jar dbms-0.10.0-SNAPSHOT.jar &
-        with:
-          path: main
+        run: java -jar dbms-0.10.0-SNAPSHOT.jar
+        working-directory: main
 
       - name: Run tests
         run: pytest --doctest-modules -v
