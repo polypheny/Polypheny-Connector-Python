@@ -9,7 +9,7 @@ on:
 jobs:
   build-polypheny:
     timeout-minutes: 15
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-java@v4
         with:
@@ -42,7 +42,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ['3.12'] # TODO: When dropping 3.8, adjust type hints for polypheny.connect
-        os: [windows-latest]
+        os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     needs: build-polypheny
     steps:
