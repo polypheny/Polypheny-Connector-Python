@@ -121,7 +121,7 @@ jobs:
         with:
           cmd: pytest --doctest-modules -v
           jar: dbms-0.10.0-SNAPSHOT.jar
-          autodocker: false
+          autodocker: ${{ matrix.os != 'windows' }}
           working-directory: main
         timeout-minutes: 10
 
@@ -134,6 +134,6 @@ jobs:
         with:
           cmd: make doctest
           jar: ../dbms-0.10.0-SNAPSHOT.jar
-          autodocker: false
+          autodocker:  ${{ matrix.os != 'windows' }}
           working-directory: main/docs
         timeout-minutes: 10
