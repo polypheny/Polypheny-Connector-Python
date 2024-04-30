@@ -190,11 +190,12 @@ jobs:
           path: main
 
       - name: Run tests
-        uses: polypheny/GitHub-Action-Run-Polypheny@v0.1.0
+        uses: polypheny/GitHub-Action-Run-Polypheny@dev
         with:
           cmd: pytest --doctest-modules -v
           jar: dbms-0.10.0-SNAPSHOT.jar
           working-directory: main
+          default-store: ${{ matrix.adapter }}
         timeout-minutes: 10
 
       - name: Install locally
@@ -202,11 +203,12 @@ jobs:
         working-directory: main
 
       - name: Run tests in docs
-        uses: polypheny/GitHub-Action-Run-Polypheny@v0.1.0
+        uses: polypheny/GitHub-Action-Run-Polypheny@dev
         with:
           cmd: make doctest
           jar: ../dbms-0.10.0-SNAPSHOT.jar
           working-directory: main/docs
+          default-store: ${{ matrix.adapter }}
 
   build-docs:
     timeout-minutes: 2
