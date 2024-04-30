@@ -116,20 +116,25 @@ jobs:
           path: main
 
       - name: Run tests
-        run: pytest --doctest-modules -v
-        env:
-          POLYPHENY_JAR: dbms-0.10.0-SNAPSHOT.jar
-        working-directory: main
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.1.0
+        with:
+          cmd: pytest --doctest-modules -v
+          jar: dbms-0.10.0-SNAPSHOT.jar
+          autodocker: ${{ matrix.os != 'windows' }}
+          working-directory: main
+        timeout-minutes: 10
 
       - name: Install locally
         run: pip install .
         working-directory: main
 
       - name: Run tests in docs
-        run: make doctest
-        env:
-          POLYPHENY_JAR: ../dbms-0.10.0-SNAPSHOT.jar
-        working-directory: main/docs
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.1.0
+        with:
+          cmd: make doctest
+          jar: ../dbms-0.10.0-SNAPSHOT.jar
+          autodocker: ${{ matrix.os != 'windows' }}
+          working-directory: main/docs
 
   test-stores:
     timeout-minutes: 10
@@ -185,22 +190,23 @@ jobs:
           path: main
 
       - name: Run tests
-        run: pytest --doctest-modules -v
-        env:
-          POLYPHENY_JAR: dbms-0.10.0-SNAPSHOT.jar
-          POLYPHENY_DEFAULT_STORE: ${{ matrix.adapter }}
-        working-directory: main
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.1.0
+        with:
+          cmd: pytest --doctest-modules -v
+          jar: dbms-0.10.0-SNAPSHOT.jar
+          working-directory: main
+        timeout-minutes: 10
 
       - name: Install locally
         run: pip install .
         working-directory: main
 
       - name: Run tests in docs
-        run: make doctest
-        env:
-          POLYPHENY_JAR: ../dbms-0.10.0-SNAPSHOT.jar
-          POLYPHENY_DEFAULT_STORE: ${{ matrix.adapter }}
-        working-directory: main/docs
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.1.0
+        with:
+          cmd: make doctest
+          jar: ../dbms-0.10.0-SNAPSHOT.jar
+          working-directory: main/docs
 
   build-docs:
     timeout-minutes: 2

@@ -1,6 +1,8 @@
 import os
 import sys
 
+import pytest
+
 import polypheny
 
 def unix_connect(args):

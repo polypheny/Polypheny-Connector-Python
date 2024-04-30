@@ -4,7 +4,7 @@ import polypheny
 import pytest
 
 @pytest.fixture
-def con(run_polypheny):
+def con():
     if sys.platform == 'win32':
         con = polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
     else:

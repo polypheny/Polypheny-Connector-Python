@@ -1,40 +1,10 @@
-import os
-import subprocess
 import sys
 
 import pytest
 import polypheny
 
-@pytest.fixture(scope='session', autouse=True)
-def run_polypheny():
-    jar = os.environ.get('POLYPHENY_JAR', '')
-
-    process = None
-    if jar != '':
-        argv = ['java', '-jar', jar, '-resetCatalog', '-resetDocker']
-        store = os.environ.get('POLYPHENY_DEFAULT_STORE', '')
-        if store != '':
-            argv.extend(['-defaultStore', store])
-        process = subprocess.Popen(argv, stdout=subprocess.PIPE, universal_newlines=True)
-        lines = []
-        while True:
-            try:
-                line = next(process.stdout).strip()
-            except StopIteration:
-                print(lines)
-                break
-            if line != '':
-                lines.append(line)
-            if 'Polypheny-DB successfully started' in line:
-                break
-
-    yield process
-
-    if process is not None:
-        process.terminate()
-
 @pytest.fixture(scope='function', autouse=True)
-def add_cur(run_polypheny, request, doctest_namespace):
+def add_cur(request, doctest_namespace):
     # Only create tables, if we run a doctest
     # In case of a doctest, request.function is None
     if request.function is not None:

@@ -29,28 +29,15 @@ yet, follow the instructions here_.
 
 .. testsetup::
 
-   import os
-   import subprocess
-
-   jar = os.environ.get('POLYPHENY_JAR', '')
-   if jar:
-       argv = ['java', '-jar', jar, '-resetCatalog', '-resetDocker']
-       store = os.environ.get('POLYPHENY_DEFAULT_STORE', '')
-       if store != '':
-	   argv.extend(['-defaultStore', store])
-       process = subprocess.Popen(argv, stdout=subprocess.PIPE, universal_newlines=True)
-
-       while True:
-	   line = next(process.stdout)
-	   if 'Polypheny-DB successfully started' in line:
-	       break
+   import sys
 
    import polypheny
    oldconnect = polypheny.connect
    def connect(address=None, *, username=None, password=None, transport=None, **kwargs):
-       import sys
        if address == None and transport == None and sys.platform == 'win32':
 	   return oldconnect(('127.0.0.1', 20590), username='pa', password='', transport='plain', **kwargs)
+       elif transport == 'unix' and sys.platform == 'win32':
+           return None
        return oldconnect(address, username=username, password=password, transport=transport, **kwargs)
    polypheny.connect = connect
    con = polypheny.connect()
