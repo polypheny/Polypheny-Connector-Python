@@ -57,11 +57,6 @@ yet, follow the instructions here_.
 
    print = myprint
 
-.. testcleanup::
-
-   if jar:
-       process.terminate()
-
 Installation
 ^^^^^^^^^^^^
 
