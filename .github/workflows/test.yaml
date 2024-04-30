@@ -116,7 +116,7 @@ jobs:
           path: main
 
       - name: Run tests
-        uses: polypheny/GitHub-Action-Run-Polypheny@v0.1.0
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: pytest --doctest-modules -v
           jar: dbms-0.10.0-SNAPSHOT.jar
@@ -129,7 +129,7 @@ jobs:
         working-directory: main
 
       - name: Run tests in docs
-        uses: polypheny/GitHub-Action-Run-Polypheny@v0.1.0
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: make doctest
           jar: ../dbms-0.10.0-SNAPSHOT.jar
@@ -190,7 +190,7 @@ jobs:
           path: main
 
       - name: Run tests
-        uses: polypheny/GitHub-Action-Run-Polypheny@dev
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: pytest --doctest-modules -v
           jar: dbms-0.10.0-SNAPSHOT.jar
@@ -203,7 +203,7 @@ jobs:
         working-directory: main
 
       - name: Run tests in docs
-        uses: polypheny/GitHub-Action-Run-Polypheny@dev
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: make doctest
           jar: ../dbms-0.10.0-SNAPSHOT.jar
