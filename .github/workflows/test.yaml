@@ -116,14 +116,11 @@ jobs:
           name: polypheny-jar
           path: main
 
-      - name: Start Polypheny
-        run: java -jar dbms-0.10.0-SNAPSHOT.jar &
-        working-directory: main
-
       - name: Run tests
-        run: pytest --doctest-modules -v
-        env:
-          POLYPHENY_JAR: dbms-0.10.0-SNAPSHOT.jar
+        uses: polypheny/GitHub-Action-Run-Polypheny@dev
+        with:
+          cmd: pytest --doctest-modules -v
+          jar: dbms-0.10.0-SNAPSHOT.jar
         working-directory: main
 
       - name: Install locally
@@ -131,7 +128,9 @@ jobs:
         working-directory: main
 
       - name: Run tests in docs
-        run: make doctest
-        env:
-          POLYPHENY_JAR: ../dbms-0.10.0-SNAPSHOT.jar
+        uses: polypheny/GitHub-Action-Run-Polypheny@dev
+        with:
+          cmd: make doctest
+          jar: ../dbms-0.10.0-SNAPSHOT.jar
         working-directory: main/docs
+
