@@ -121,6 +121,7 @@ jobs:
         with:
           cmd: pytest --doctest-modules -v
           jar: dbms-0.10.0-SNAPSHOT.jar
+        timeout-minutes: 10
         working-directory: main
 
       - name: Install locally
@@ -132,5 +133,5 @@ jobs:
         with:
           cmd: make doctest
           jar: ../dbms-0.10.0-SNAPSHOT.jar
+        timeout-minutes: 10
         working-directory: main/docs
-
