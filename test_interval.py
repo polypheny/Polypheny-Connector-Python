@@ -1,7 +1,7 @@
 from polypheny.interval import IntervalMonthMilliseconds
 from polypheny.serialize import proto2py
 from polypheny import Error
-from polyprism import value_pb2
+from org.polypheny.prism import value_pb2
 
 import pytest
 

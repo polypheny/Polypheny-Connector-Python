@@ -3,7 +3,7 @@ import decimal
 from functools import reduce
 
 import polypheny.interval as interval
-from polyprism import value_pb2
+from org.polypheny.prism import value_pb2
 
 
 def serialize_big_decimal(v, value):
