@@ -26,10 +26,10 @@ class PlainTransport:
             raise EOFError
         n = int.from_bytes(bl, byteorder='little')
         if n > 127:
-            raise Error("Invalid verion length")
+            raise Error("Invalid version length")
         remote_version = self.con.recv(n)
         if remote_version[-1] != 0x0a:
-            raise Error("Invalid verion message")
+            raise Error("Invalid version message")
 
         if remote_version[0:-1] != version.encode():
             raise Error(f"Unsupported version: {repr(remote_version[0:-1])} expected {version.encode()}")
