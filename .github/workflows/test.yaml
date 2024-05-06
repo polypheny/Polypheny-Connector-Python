@@ -74,7 +74,7 @@ jobs:
 
       - name: Build Protobuf Files
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
+        run: bin/protoc --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
         working-directory: Polypheny-Prism-API
 
       - name: Download protobuf for Windows
@@ -86,7 +86,7 @@ jobs:
 
       - name: Build Protobuf Files
         if: ${{ startsWith(matrix.os, 'windows') }}
-        run: bin/protoc.exe -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
+        run: bin/protoc.exe --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
         working-directory: Polypheny-Prism-API
 
       - name: Download protobuf for macOS
@@ -98,7 +98,7 @@ jobs:
 
       - name: Build Protobuf Files
         if: ${{ startsWith(matrix.os, 'macos') }}
-        run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
+        run: bin/protoc --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
         working-directory: Polypheny-Prism-API
 
       - name: Install Protobuf Package
@@ -172,7 +172,7 @@ jobs:
         working-directory: Polypheny-Prism-API
 
       - name: Build Protobuf Files
-        run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
+        run: bin/protoc --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
         working-directory: Polypheny-Prism-API
 
       - name: Install Protobuf Package
@@ -236,7 +236,7 @@ jobs:
         working-directory: Polypheny-Prism-API
 
       - name: Build Protobuf Files
-        run: bin/protoc -I proto --experimental_allow_proto3_optional --python_out . proto/polyprism/*.proto
+        run: bin/protoc --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
         working-directory: Polypheny-Prism-API
 
       - name: Install Protobuf Package
