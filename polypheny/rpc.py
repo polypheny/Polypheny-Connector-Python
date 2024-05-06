@@ -3,14 +3,14 @@ import socket
 
 from polypheny.exceptions import Error
 from polypheny.serialize import *
-from polyprism import protointerface_pb2
-from polyprism import statement_requests_pb2
-from polyprism import transaction_requests_pb2
-from polyprism import connection_requests_pb2
+from org.polypheny.prism import protointerface_pb2
+from org.polypheny.prism import statement_requests_pb2
+from org.polypheny.prism import transaction_requests_pb2
+from org.polypheny.prism import connection_requests_pb2
+from org.polypheny.prism import version
 
-POLYPHENY_API_MAJOR = 2
-POLYPHENY_API_MINOR = 0
-
+POLYPHENY_API_MAJOR = version.MAJOR_VERSION
+POLYPHENY_API_MINOR = version.MINOR_VERSION
 
 class PlainTransport:
     VERSION = "plain-v1@polypheny.com"

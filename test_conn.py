@@ -100,7 +100,7 @@ def test_invalid_version():
     major = rpc.POLYPHENY_API_MAJOR
     try:
         with pytest.raises(polypheny.Error):
-            rpc.POLYPHENY_API_MAJOR = 1
+            rpc.POLYPHENY_API_MAJOR = major - 1
             polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
     finally:
         rpc.POLYPHENY_API_MAJOR = major
