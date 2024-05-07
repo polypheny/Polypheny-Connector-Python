@@ -1,5 +1,5 @@
-polyphenyprism
 protobuf==4.24.3
+polypheny-prism-api
 pytest
 coverage
 Sphinx

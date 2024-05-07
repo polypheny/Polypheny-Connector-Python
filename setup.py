@@ -5,6 +5,6 @@ setup(name='polypheny',
       description='Driver for Polypheny',
       packages=['polypheny'],
       install_requires=[
-          "polyphenyprism",
+          "polypheny-prism-api",
       ],
       )
