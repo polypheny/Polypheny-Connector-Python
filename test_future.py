@@ -25,15 +25,6 @@ def test_insert_double(cur):
     assert cur.fetchone() == [1, 2]
     assert cur.fetchone() == [2, 3]
 
-def test_dynamic_text_parameter(cur):
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TEXT NOT NULL, PRIMARY KEY(i))')
-    with pytest.raises(polypheny.Error):
-        cur.execute('SELECT a FROM t WHERE a = ?', ('Hello World',))
-
-    return  # remove if execute works
-    assert cur.fetchone() is None
-
 def test_serialize_time_with_micros(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TIME(3) NOT NULL, PRIMARY KEY(i))')

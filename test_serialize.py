@@ -203,3 +203,11 @@ def test_no_error_when_invalid_create(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     with pytest.raises(polypheny.Error):
         cur.execute('CREATE TABLE t(a BOOLEAN)')
+
+def test_dynamic_text_parameter(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TEXT NOT NULL, PRIMARY KEY(i))')
+    cur.execute('SELECT a FROM t WHERE a = ?', ('Hello World',))
+
+    assert cur.fetchone() is None
+
