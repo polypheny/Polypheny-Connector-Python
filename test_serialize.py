@@ -210,4 +210,3 @@ def test_dynamic_text_parameter(cur):
     cur.execute('SELECT a FROM t WHERE a = ?', ('Hello World',))
 
     assert cur.fetchone() is None
-

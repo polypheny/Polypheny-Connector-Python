@@ -4,6 +4,7 @@ from polypheny.exceptions import *
 import datetime
 from typing import Union, Tuple
 
+# See https://peps.python.org/pep-0249/#globals
 apilevel = '2.0'
 threadsafety = 0
 paramstyle = 'qmark'
