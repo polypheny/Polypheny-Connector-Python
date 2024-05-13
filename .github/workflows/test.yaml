@@ -189,7 +189,7 @@ jobs:
         uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: make doctest
-          jar: ../dbms-0.10.0-SNAPSHOT.jar
+          jar: ../polypheny.jar
           working-directory: main/docs
           default-store: ${{ matrix.adapter }}
 
