@@ -10,30 +10,9 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-java@v4
+      - uses: polypheny/GitHub-Action-Build-Polypheny@main
         with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Checkout Polypheny
-        uses: actions/checkout@v4
-        with:
-          repository: polypheny/Polypheny-DB
-          ref: proto-without-grpc
-
-      - name: Build Polypheny
-        run: |
-          ./gradlew build -x test -x licensee
-
-      - name: Build Polypheny
-        run: |
-          ./gradlew build -x test -x licensee
-
-      - name: Store Polypheny JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: polypheny-jar
-          path: dbms/build/libs/dbms-0.10.0-SNAPSHOT.jar
+          branch: proto-without-grpc
 
   test-system-python:
     timeout-minutes: 10
@@ -197,7 +176,7 @@ jobs:
         uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: pytest --doctest-modules -v
-          jar: dbms-0.10.0-SNAPSHOT.jar
+          jar: polypheny.jar
           working-directory: main
           default-store: ${{ matrix.adapter }}
         timeout-minutes: 10
