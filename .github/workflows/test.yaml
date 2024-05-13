@@ -100,7 +100,7 @@ jobs:
         uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: pytest --doctest-modules -v
-          jar: dbms-0.10.0-SNAPSHOT.jar
+          jar: polypheny.jar
           autodocker: ${{ matrix.os != 'windows' }}
           working-directory: main
         timeout-minutes: 10
@@ -113,7 +113,7 @@ jobs:
         uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: make doctest
-          jar: ../dbms-0.10.0-SNAPSHOT.jar
+          jar: ../polypheny.jar
           autodocker: ${{ matrix.os != 'windows' }}
           working-directory: main/docs
 
