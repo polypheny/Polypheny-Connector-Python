@@ -14,17 +14,6 @@ def test_cypher(cur_with_data):
         cur.executeany('cypher', 'MATCH (e:customers) WHERE e.id = 1 RETURN e.name')
         assert cur.fetchone()[0] == 'Maria'
 
-def test_insert_double(cur):
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
-    with pytest.raises(polypheny.Error):
-        cur.execute('INSERT INTO t(id, a) VALUES (1, 2), (?, ?)', (2, 3))
-
-    return  # remove if execute works
-    cur.execute('SELECT id, a FROM t ORDER BY id')
-    assert cur.fetchone() == [1, 2]
-    assert cur.fetchone() == [2, 3]
-
 def test_serialize_time_with_micros(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a TIME(3) NOT NULL, PRIMARY KEY(i))')

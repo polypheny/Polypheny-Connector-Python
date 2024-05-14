@@ -172,6 +172,14 @@ def test_deserialize_real(cur):
     cur.execute('SELECT 0.05')
     assert cur.fetchone()[0] == decimal.Decimal('0.05')
 
+def test_insert_double(cur):
+    cur.execute('DROP TABLE IF EXISTS t')
+    cur.execute('CREATE TABLE t(id INTEGER PRIMARY KEY, a INTEGER)')
+    cur.execute('INSERT INTO t(id, a) VALUES (1, 2), (?, ?)', (2, 3))
+    cur.execute('SELECT id, a FROM t ORDER BY id')
+    assert cur.fetchone() == [1, 2]
+    assert cur.fetchone() == [2, 3]
+
 def test_deserialize_string(cur):
     cur.execute("SELECT 'Hello World'")
     assert cur.fetchone()[0] == 'Hello World'
