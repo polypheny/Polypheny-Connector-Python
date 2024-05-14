@@ -44,7 +44,7 @@ def test_serialize_floats(cur):
 
 def test_serialize_decimal(cur):
     cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DECIMAL(2, 2) NOT NULL, PRIMARY KEY(i))')
+    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DECIMAL(3, 2) NOT NULL, PRIMARY KEY(i))')
     decimals = {'0', '0.49', '0.5', '0.51', '-0.49', '-0.5', '-0.51'}
     for i, d in enumerate(map(decimal.Decimal, decimals)):
         cur.execute('INSERT INTO t(i, a) VALUES (?, ?)', (i, d,))
