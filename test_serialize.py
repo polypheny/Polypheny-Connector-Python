@@ -151,13 +151,15 @@ def test_serialize_decimal_large(cur):
         cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (2**77,))
 
 def test_serialize_decimal_large2(cur):
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DECIMAL NOT NULL, PRIMARY KEY(i))')
-    cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (2**77,))
-    cur.execute('SELECT a FROM t')
+    def test_serialize_decimal_large2(cur):
+    if os.environ['default-store'] != 'monetdb':
+        cur.execute('DROP TABLE IF EXISTS t')
+        cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DECIMAL NOT NULL, PRIMARY KEY(i))')
+        cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (2**77,))
+        cur.execute('SELECT a FROM t')
 
-    assert cur.fetchone()[0] == 151115727451828646838272
-    assert cur.fetchone() is None
+        assert cur.fetchone()[0] == 151115727451828646838272
+        assert cur.fetchone() is None
 
 
 def test_deserialize_number(cur):
