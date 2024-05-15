@@ -152,7 +152,7 @@ def test_serialize_decimal_large(cur):
         cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (2**77,))
 
 def test_serialize_decimal_large2(cur):
-    if os.getenv('default_store', '') != 'monetdb':
+    if os.getenv('DEFAULT_STORE', '') != 'monetdb':
         cur.execute('DROP TABLE IF EXISTS t')
         cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a DECIMAL NOT NULL, PRIMARY KEY(i))')
         cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (2**77,))
