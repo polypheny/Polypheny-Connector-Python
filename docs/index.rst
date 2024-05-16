@@ -29,6 +29,7 @@ yet, follow the instructions here_.
 
 .. testsetup::
 
+   import decimal
    import sys
 
    import polypheny
@@ -50,8 +51,16 @@ yet, follow the instructions here_.
 
    oldprint = print
    def myprint(*objects, sep=' ', end='\n', file=None, flush=False):
+       def toint(i):
+           if isinstance(i, decimal.Decimal) and int(i) == i:
+               return int(i)
+           else:
+               return i
+
        if len(objects) == 1 and isinstance(objects[0], dict):
-	   oldprint('{' + ', '.join(map(lambda i: f'{repr(i[0])}: {repr(i[1])}', sorted(objects[0].items()))) + '}')
+	   oldprint('{' + ', '.join(map(lambda i: f'{repr(i[0])}: {repr(toint(i[1]))}', sorted(objects[0].items()))) + '}')
+       elif len(objects) == 1 and isinstance(objects[0], list):
+           oldprint('[' + ', '.join(map(repr, map(toint, objects[0]))) + ']')
        else:
 	   oldprint(*objects, sep=sep, end=end, file=file, flush=flush)
 

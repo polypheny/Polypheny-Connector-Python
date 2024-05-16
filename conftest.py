@@ -1,3 +1,4 @@
+import decimal
 import sys
 
 import pytest
@@ -25,8 +26,13 @@ def add_cur(request, doctest_namespace):
     cur.close()
 
     def myprint(*objects, sep=' ', end='\n', file=None, flush=False):
+        def toint(i):
+            if isinstance(i, decimal.Decimal) and int(i) == i:
+                return int(i)
+            else:
+                return i
         if len(objects) == 1 and isinstance(objects[0], dict):
-            print('{' + ', '.join(map(lambda i: f'{repr(i[0])}: {repr(i[1])}', sorted(objects[0].items()))) + '}')
+            print('{' + ', '.join(map(lambda i: f'{repr(i[0])}: {repr(toint(i[1]))}', sorted(objects[0].items()))) + '}')
         else:
             print(*objects, sep=sep, end=end, file=file, flush=flush)
 
