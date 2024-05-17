@@ -32,7 +32,14 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          
+      - name: Set Version
+        id: version
+        run: echo "v0.0.0" > polypheny-connector-version.txt
 
+      - name: Create MANIFEST.in
+        run: echo "include polypheny-connector-version.txt" > MANIFEST.in
+              
       - name: Checkout driver
         uses: actions/checkout@v4
         with:
@@ -90,6 +97,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Set Version
+        id: version
+        run: echo "v0.0.0" > polypheny-connector-version.txt
+
+      - name: Create MANIFEST.in
+        run: echo "include polypheny-connector-version.txt" > MANIFEST.in
+
       - name: Checkout driver
         uses: actions/checkout@v4
         with:
@@ -137,6 +151,13 @@ jobs:
       - name: Checkout driver
         uses: actions/checkout@v4
 
+      - name: Set Version
+        id: version
+        run: echo "v0.0.0" > polypheny-connector-version.txt
+
+      - name: Create MANIFEST.in
+        run: echo "include polypheny-connector-version.txt" > MANIFEST.in
+        
       - name: Install driver dependencies
         run: pip install -r requirements.txt
 

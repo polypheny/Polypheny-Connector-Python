@@ -19,16 +19,10 @@ jobs:
                   python-version: 3.8
             - name: Set Version
               id: version
-              run: |
-                  if [[ "${{ github.event_name }}" == "release" && "${{ github.event.action }}" == "published" ]]; then
-                      echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-                  else
-                      TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-                      echo "VERSION=0.0.dev${TIMESTAMP}" >> $GITHUB_ENV
-                  fi
+              run: echo "${GITHUB_REF#refs/tags/}" > polypheny-connector-version.txt
+            - name: Create MANIFEST.in
+              run: echo "include polypheny-connector-version.txt" > MANIFEST.in
             - name: Build package
               run: python setup.py sdist
-              env:
-                  VERSION: ${{ env.VERSION }}
             - name: Publish distribution 📦 to PyPI
               uses: pypa/gh-action-pypi-publish@release/v1
