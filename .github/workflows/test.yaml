@@ -41,8 +41,6 @@ jobs:
       - name: Install driver dependencies
         run: pip install -r requirements.txt
         working-directory: main
-        env:
-          RELEASE_VERSION: '0.1'
 
       - name: Load Polypheny JAR
         uses: actions/download-artifact@v4
@@ -100,8 +98,6 @@ jobs:
       - name: Install driver dependencies
         run: pip install -r requirements.txt
         working-directory: main
-        env:
-          RELEASE_VERSION: '0.1'
 
       - name: Load Polypheny JAR
         uses: actions/download-artifact@v4
@@ -143,8 +139,6 @@ jobs:
 
       - name: Install driver dependencies
         run: pip install -r requirements.txt
-        env:
-          RELEASE_VERSION: '0.1'
 
       - name: Install markdown generator
         run: pip install sphinx-markdown-builder
