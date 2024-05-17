@@ -1,7 +1,7 @@
 import os
 import sys
 
-from distutils.core import setup
+from setuptools import setup
 
 # Retrieve 'VERSION' environment variable, default to '0.0' if not found.
 version = os.getenv('VERSION', '0.0')
