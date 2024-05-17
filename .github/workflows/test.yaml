@@ -33,58 +33,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Checkout Polypheny-Prism-API
-        uses: actions/checkout@v4
-        with:
-          repository: polypheny/Polypheny-Prism-API
-          path: Polypheny-Prism-API
-
       - name: Checkout driver
         uses: actions/checkout@v4
         with:
           path: main
-
-      - name: Download protobuf for Linux
-        if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: |
-          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-linux-x86_64.zip
-          unzip protoc-26.0-linux-x86_64.zip
-        working-directory: Polypheny-Prism-API
-
-      - name: Build Protobuf Files
-        if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: bin/protoc --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
-        working-directory: Polypheny-Prism-API
-
-      - name: Download protobuf for Windows
-        if: ${{ startsWith(matrix.os, 'windows') }}
-        run: |
-          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-win64.zip
-          unzip protoc-26.0-win64.zip
-        working-directory: Polypheny-Prism-API
-
-      - name: Build Protobuf Files
-        if: ${{ startsWith(matrix.os, 'windows') }}
-        run: bin/protoc.exe --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
-        working-directory: Polypheny-Prism-API
-
-      - name: Download protobuf for macOS
-        if: ${{ startsWith(matrix.os, 'macos') }}
-        run: |
-          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-osx-universal_binary.zip
-          unzip protoc-26.0-osx-universal_binary.zip
-        working-directory: Polypheny-Prism-API
-
-      - name: Build Protobuf Files
-        if: ${{ startsWith(matrix.os, 'macos') }}
-        run: bin/protoc --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
-        working-directory: Polypheny-Prism-API
-
-      - name: Install Protobuf Package
-        run: pip install .
-        working-directory: Polypheny-Prism-API
-        env:
-          VERSION: 1.2
 
       - name: Install driver dependencies
         run: pip install -r requirements.txt
@@ -138,32 +90,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Checkout Polypheny-Prism-API
-        uses: actions/checkout@v4
-        with:
-          repository: polypheny/Polypheny-Prism-API
-          path: Polypheny-Prism-API
-
       - name: Checkout driver
         uses: actions/checkout@v4
         with:
           path: main
-
-      - name: Download protobuf for Linux
-        run: |
-          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-linux-x86_64.zip
-          unzip protoc-26.0-linux-x86_64.zip
-        working-directory: Polypheny-Prism-API
-
-      - name: Build Protobuf Files
-        run: bin/protoc --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
-        working-directory: Polypheny-Prism-API
-
-      - name: Install Protobuf Package
-        run: pip install .
-        working-directory: Polypheny-Prism-API
-        env:
-          VERSION: 1.2
 
       - name: Install driver dependencies
         run: pip install -r requirements.txt
@@ -204,32 +134,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Checkout Polypheny-Prism-API
-        uses: actions/checkout@v4
-        with:
-          repository: polypheny/Polypheny-Prism-API
-          path: Polypheny-Prism-API
-
       - name: Checkout driver
         uses: actions/checkout@v4
         with:
           path: main
-
-      - name: Download protobuf for Linux
-        run: |
-          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protoc-26.0-linux-x86_64.zip
-          unzip protoc-26.0-linux-x86_64.zip
-        working-directory: Polypheny-Prism-API
-
-      - name: Build Protobuf Files
-        run: bin/protoc --experimental_allow_proto3_optional -I . --python_out . org/polypheny/prism/*.proto
-        working-directory: Polypheny-Prism-API
-
-      - name: Install Protobuf Package
-        run: pip install .
-        working-directory: Polypheny-Prism-API
-        env:
-          VERSION: 1.2
 
       - name: Install driver dependencies
         run: pip install -r requirements.txt
