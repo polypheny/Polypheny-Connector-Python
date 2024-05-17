@@ -4,7 +4,7 @@ import sys
 from setuptools import setup
 
 # Retrieve 'VERSION' environment variable, default to '0.0' if not found.
-version = os.getenv('VERSION', '0.0')
+version = os.getenv('RELEASE_VERSION', '0.0')
 
 # Attempt to split the version number, default to '0' for both if it fails
 try:

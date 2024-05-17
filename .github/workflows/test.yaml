@@ -42,7 +42,7 @@ jobs:
         run: pip install -r requirements.txt
         working-directory: main
         env:
-          VERSION: '0.1'
+          RELEASE_VERSION: '0.1'
 
       - name: Load Polypheny JAR
         uses: actions/download-artifact@v4
@@ -101,7 +101,7 @@ jobs:
         run: pip install -r requirements.txt
         working-directory: main
         env:
-          VERSION: '0.1'
+          RELEASE_VERSION: '0.1'
 
       - name: Load Polypheny JAR
         uses: actions/download-artifact@v4
@@ -140,34 +140,29 @@ jobs:
 
       - name: Checkout driver
         uses: actions/checkout@v4
-        with:
-          path: main
 
       - name: Install driver dependencies
         run: pip install -r requirements.txt
-        working-directory: main
         env:
-          VERSION: '0.1'
+          RELEASE_VERSION: '0.1'
 
       - name: Install markdown generator
         run: pip install sphinx-markdown-builder
-        working-directory: main
 
       - name: Install locally
         run: pip install .
-        working-directory: main
 
       - name: Generate documentation (markdown)
         run: make markdown
-        working-directory: main/docs
+        working-directory: docs
 
       - name: Generate documentation (HTML)
         run: make html
-        working-directory: main/docs
+        working-directory: docs
 
       - name: Store docs
         uses: actions/upload-artifact@v4
         with:
           name: docs
-          path: main/docs/_build
+          path: docs/_build
 
