@@ -32,28 +32,24 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          
+
+      - name: Checkout driver
+        uses: actions/checkout@v4
+
       - name: Set Version
         id: version
         run: echo "v0.0.0" > polypheny-connector-version.txt
 
       - name: Create MANIFEST.in
         run: echo "include polypheny-connector-version.txt" > MANIFEST.in
-              
-      - name: Checkout driver
-        uses: actions/checkout@v4
-        with:
-          path: main
 
       - name: Install driver dependencies
         run: pip install -r requirements.txt
-        working-directory: main
 
       - name: Load Polypheny JAR
         uses: actions/download-artifact@v4
         with:
           name: polypheny-jar
-          path: main
 
       - name: Run tests
         uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
@@ -61,12 +57,10 @@ jobs:
           cmd: pytest --doctest-modules -v
           jar: polypheny.jar
           autodocker: ${{ matrix.os != 'windows' }}
-          working-directory: main
         timeout-minutes: 10
 
       - name: Install locally
         run: pip install .
-        working-directory: main
 
       - name: Run tests in docs
         uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
@@ -74,7 +68,7 @@ jobs:
           cmd: make doctest
           jar: ../polypheny.jar
           autodocker: ${{ matrix.os != 'windows' }}
-          working-directory: main/docs
+          working-directory: docs
 
   test-stores:
     timeout-minutes: 10
@@ -97,6 +91,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Checkout driver
+        uses: actions/checkout@v4
+
       - name: Set Version
         id: version
         run: echo "v0.0.0" > polypheny-connector-version.txt
@@ -104,40 +101,31 @@ jobs:
       - name: Create MANIFEST.in
         run: echo "include polypheny-connector-version.txt" > MANIFEST.in
 
-      - name: Checkout driver
-        uses: actions/checkout@v4
-        with:
-          path: main
-
       - name: Install driver dependencies
         run: pip install -r requirements.txt
-        working-directory: main
 
       - name: Load Polypheny JAR
         uses: actions/download-artifact@v4
         with:
           name: polypheny-jar
-          path: main
 
       - name: Run tests
         uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: pytest --doctest-modules -v
           jar: polypheny.jar
-          working-directory: main
           default-store: ${{ matrix.adapter }}
         timeout-minutes: 10
 
       - name: Install locally
         run: pip install .
-        working-directory: main
 
       - name: Run tests in docs
         uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
         with:
           cmd: make doctest
           jar: ../polypheny.jar
-          working-directory: main/docs
+          working-directory: docs
           default-store: ${{ matrix.adapter }}
 
   build-docs:
