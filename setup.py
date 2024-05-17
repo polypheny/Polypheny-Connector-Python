@@ -22,6 +22,6 @@ setup(name='polypheny',
       long_description_content_type='text/markdown',
       packages=['polypheny'],
       install_requires=[
-          "polypheny-prism-api==1.5",
+          "polypheny-prism-api==1.6",
       ],
       )
