@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-polypheny
     steps:
-      - name: Set stroe env variable
+      - name: Set store env variable
         run: |
             echo "DEFAULT_STORE=${{ matrix.adapter }}" >> $GITHUB_ENV
       - uses: actions/setup-python@v5
