@@ -5,8 +5,8 @@ from setuptools import setup, find_packages
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 CONNECTOR_SRC_DIR = os.path.join(THIS_DIR, "polypheny")
 
-VERSION = (1, 1, 1, None)  # Default
-VERSION = "v1.1.1" # Default
+VERSION = (0, 0, 0, None)  # Default
+VERSION = "v0.0.0" # Default
 
 
 version_file = 'polypheny-connector-version.txt'
