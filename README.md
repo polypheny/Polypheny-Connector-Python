@@ -35,7 +35,10 @@ A few examples of the most common functionalities provided by the adapter:
 import polypheny
 
 # Connect to Polypheny
-connection = polypheny.connect('localhost', 20590, username='pa', password='')
+connection = polypheny.connect('127.0.0.1', 20590, username='pa', password='', transport='plain')
+
+# If Python 3.8 is used the connection needs to bespecified as a tuple. Uncomment the following line
+#connection = polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
 
 # Get a cursor
 cursor = connection.cursor()
@@ -50,9 +53,30 @@ connection.commit()
 # Execute a query
 cursor.execute("SELECT * from dummy")
 
+print("\nRelational output from SQL")
+print("\t",cursor.fetchone())
+
+# Accessing data using MQL
+cursor.executeany('mongo', 'db.dummy.find()',namespace='public')
+
+return_mql =  cursor.fetchone()
+#json_output = json.loads( return_mql )
+
+
+print("\nPlain JSON output from MQL")
+print("\t",return_mql)
+
+
+
+print("\nPlain JSON key 'text' from from MQL return")
+print("\t",return_mql["text"])
+
+
+cursor.execute("DROP TABLE dummy")
+
 # Print result
-for f in cursor:
-	print(f)
+#for f in cursor:
+#       print(f)
 
 # Close the connection
 connection.close()
