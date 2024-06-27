@@ -116,6 +116,17 @@ class ResultCursor:
                 self.rows = iter(self.frame.relational_frame.rows)
             elif restype == 'document_frame':
                 self.rows = iter(self.frame.document_frame.documents)
+            elif restype == 'graph_frame':
+                graph_frame = self.frame.graph_frame
+                if len(graph_frame.nodes) > 0:
+                    self.rows = iter(self.frame.graph_frame.graph.nodes)
+                    return
+                if len(graph_frame.edges) > 0:
+                    self.rows = iter(self.frame.graph_frame.graph.edges)
+                    return
+                if len(graph_frame.paths) > 0:
+                    self.rows = iter(self.frame.graph_frame.graph.paths)
+                    return
             else:
                 self.closed = True
                 raise NotImplementedError(f'Resultset of type {restype} is not implemented')
