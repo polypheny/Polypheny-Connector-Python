@@ -148,6 +148,7 @@ def proto_node2py(proto_node):
 
 def proto_edge2py(proto_edge):
     properties_dict = {}
+
     for entry in proto_edge.properties:
         properties_dict[proto2py(entry.key)] = proto2py(entry.value)
 
@@ -158,5 +159,5 @@ def proto_edge2py(proto_edge):
         'labels': list(proto_edge.labels),
         'source': proto_edge.source,
         'target': proto_edge.target,
-        'direction': proto_edge.direction.name
+        'direction': proto_edge.direction
     }

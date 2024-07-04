@@ -15,7 +15,7 @@
 from test_helper import con
 
 
-def test_match_and_order_by(con):
+def test_nodes_match_and_order_by(con):
     cur = con.cursor()
     cur.execute("DROP NAMESPACE IF EXISTS cyphertest")
     cur.execute("CREATE GRAPH NAMESPACE cyphertest")
@@ -32,6 +32,46 @@ def test_match_and_order_by(con):
         {'id': 3, 'name': 'Charlie'}
     ]
     assert (sorted(result, key=lambda x: x['id']), expected)
-
     cur.close()
     con.close()
+
+
+def test_nodes(con):
+    cur = con.cursor()
+    cur.execute("DROP NAMESPACE IF EXISTS cyphertest")
+    cur.execute("CREATE GRAPH NAMESPACE cyphertest")
+    cur.executeany("cypher", "CREATE (:Person {id: 1, name: 'Alice'})", namespace="cyphertest")
+    cur.executeany("cypher", "CREATE (:Person {id: 2, name: 'Bob'})", namespace="cyphertest")
+    cur.executeany("cypher", "CREATE (:Person {id: 3, name: 'Charlie'})", namespace="cyphertest")
+    cur.executeany("cypher", "MATCH (a:Person {name: 'Alice'}), (b:Person {name: 'Bob'}) CREATE (a)-[:KNOWS]->(b)",
+                   namespace="cyphertest")
+    cur.executeany("cypher", "MATCH (b:Person {name: 'Bob'}), (c:Person {name: 'Charlie'}) CREATE (b)-[:KNOWS]->(c)",
+                   namespace="cyphertest")
+    con.commit()
+    cur.executeany("cypher", 'MATCH ()-[r:KNOWS]->() RETURN r', namespace="cyphertest")
+    result = cur.fetchall()
+
+    expected = [
+        {'type': 'KNOWS'},
+        {'type': 'KNOWS'}
+    ]
+    assert (sorted(result, key=lambda x: x['id']), expected)
+    cur.close()
+    con.close()
+
+
+def test_nodes_relational(con):
+    cur = con.cursor()
+    cur.execute("DROP NAMESPACE IF EXISTS cyphertest")
+    cur.execute("CREATE GRAPH NAMESPACE cyphertest")
+    cur.executeany("cypher", "CREATE (:Person {id: 1, name: 'Alice'})", namespace="cyphertest")
+    cur.executeany("cypher", "CREATE (:Person {id: 2, name: 'Bob'})", namespace="cyphertest")
+    cur.executeany("cypher", "CREATE (:Person {id: 3, name: 'Charlie'})", namespace="cyphertest")
+    con.commit()
+    cur.executeany("cypher", "MATCH (n:Person {name: 'Alice'}) RETURN n.name, n.id", namespace="cyphertest")
+    result = cur.fetchall()
+
+    assert len(result) == 1
+    row = result[0]
+    assert row[0] == "Alice"
+    assert row[1] == "1"
