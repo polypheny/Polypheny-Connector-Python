@@ -119,13 +119,13 @@ class ResultCursor:
             elif restype == 'graph_frame':
                 graph_frame = self.frame.graph_frame
                 if len(graph_frame.nodes) > 0:
-                    self.rows = iter(self.frame.graph_frame.graph.nodes)
+                    self.rows = iter(self.frame.graph_frame.nodes)
                     return
                 if len(graph_frame.edges) > 0:
-                    self.rows = iter(self.frame.graph_frame.graph.edges)
+                    self.rows = iter(self.frame.graph_frame.edges)
                     return
                 if len(graph_frame.paths) > 0:
-                    self.rows = iter(self.frame.graph_frame.graph.paths)
+                    self.rows = iter(self.frame.graph_frame.paths)
                     return
             else:
                 self.closed = True
@@ -163,7 +163,6 @@ class ResultCursor:
         self.frame = self.con.con.fetch(self.statement_id, self.fetch_size)
         self.rows = iter(self.frame.relational_frame.rows)  # TODO result must not be relational
         return next(self.rows)  # TODO: What happens if this returns StopIteration, but another frame could be fetched?
-
 
 class Cursor:
     def __init__(self, con):
@@ -301,6 +300,14 @@ class Cursor:
             value = value_pb2.ProtoValue()
             value.document.CopyFrom(n)
             return proto2py(value)
+        elif isinstance(n, value_pb2.ProtoNode):
+            value = n
+            return proto_node2py(value)
+        elif isinstance(n, value_pb2.ProtoEdge):
+            value = n
+            return proto_edge2py(value)
+        elif isinstance(n, value_pb2.ProtoPath):
+            raise Error("Paths are not supported yet.")
         else:
             raise Error(f"Unknown result of type {type(n)}")
 
