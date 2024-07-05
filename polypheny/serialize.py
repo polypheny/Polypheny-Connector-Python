@@ -148,7 +148,6 @@ def proto_node2py(proto_node):
 
 def proto_edge2py(proto_edge):
     properties_dict = {}
-
     for entry in proto_edge.properties:
         properties_dict[proto2py(entry.key)] = proto2py(entry.value)
 
