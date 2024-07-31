@@ -34,56 +34,48 @@ A few examples of the most common functionalities provided by the adapter:
 ```python3
 import polypheny
 
-# Connect to Polypheny
-connection = polypheny.connect('127.0.0.1', 20590, username='pa', password='', transport='plain')
+# Connect to locally running Polypheny via UNIX sockets (on Linux, BSD and macOS)
+con = polypheny.connect()
 
-# If Python 3.8 is used the connection needs to bespecified as a tuple. Uncomment the following line
-#connection = polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
+# Unencrypted over the network (all systems)
+con = polypheny.connect(
+  ('127.0.0.1', 20590),
+  username='pa',
+  password='',
+  transport='plain',
+)
 
 # Get a cursor
-cursor = connection.cursor()
+cursor = con.cursor()
 
 # Create a new table
 cursor.execute("CREATE TABLE dummy (id INT NOT NULL, text VARCHAR(2), num INT, PRIMARY KEY(id))")
 
 # Insert values into table
 cursor.execute("INSERT INTO dummy VALUES (407 , 'de', 93)")
-connection.commit()
+con.commit()
 
 # Execute a query
 cursor.execute("SELECT * from dummy")
 
-print("\nRelational output from SQL")
-print("\t",cursor.fetchone())
+print("\nRelational results from SQL")
+for row in cursor:
+    print("\t", row)
 
 # Accessing data using MQL
-cursor.executeany('mongo', 'db.dummy.find()',namespace='public')
+cursor.executeany('mongo', 'db.dummy.find()', namespace='public')
 
-return_mql =  cursor.fetchone()
-#json_output = json.loads( return_mql )
-
-
-print("\nPlain JSON output from MQL")
-print("\t",return_mql)
-
-
-
-print("\nPlain JSON key 'text' from from MQL return")
-print("\t",return_mql["text"])
-
+print("\nDocument results from MQL (as Python dicts)")
+for doc in cursor:
+    print("\t", doc)
 
 cursor.execute("DROP TABLE dummy")
 
-# Print result
-#for f in cursor:
-#       print(f)
-
 # Close the connection
-connection.close()
+con.close()
 ```
 
 An in-depth and more detailed documentation can be found [here](https://docs.polypheny.com/en/latest/drivers/python/overview).
-
 
 ## Tests
 Run the tests with coverage report:
