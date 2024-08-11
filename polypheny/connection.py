@@ -118,14 +118,8 @@ class ResultCursor:
                 self.rows = iter(self.frame.document_frame.documents)
             elif restype == 'graph_frame':
                 graph_frame = self.frame.graph_frame
-                if len(graph_frame.nodes) > 0:
-                    self.rows = iter(self.frame.graph_frame.nodes)
-                    return
-                if len(graph_frame.edges) > 0:
-                    self.rows = iter(self.frame.graph_frame.edges)
-                    return
-                if len(graph_frame.paths) > 0:
-                    self.rows = iter(self.frame.graph_frame.paths)
+                if len(graph_frame.elements) > 0:
+                    self.rows = iter(self.frame.graph_frame.element)
                     return
             else:
                 self.closed = True
