@@ -26,6 +26,7 @@ from org.polypheny.prism import version
 POLYPHENY_API_MAJOR = version.MAJOR_VERSION
 POLYPHENY_API_MINOR = version.MINOR_VERSION
 
+
 class PlainTransport:
     VERSION = "plain-v1@polypheny.com"
 
@@ -139,8 +140,11 @@ class Connection:
             req.password = password
         req.major_api_version = POLYPHENY_API_MAJOR
         req.minor_api_version = POLYPHENY_API_MINOR
-        req.connection_properties.is_auto_commit = auto_commit
-
+        connection_properties = {
+            "auto_commit": "true" if auto_commit else "false"
+        }
+        req.properties.update(connection_properties)
+        req.features = []  # features for the feature vector would be set here
         return self.call(msg).connection_response
 
     def disconnect(self):
