@@ -1,0 +1,5 @@
+polypheny-prism-api==1.10
+pytest
+coverage
+Sphinx
+myst-parser
