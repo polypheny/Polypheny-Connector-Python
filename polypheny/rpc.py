@@ -57,6 +57,8 @@ class PlainTransport:
 
     def recv_msg(self):
         bl = self.con.recv(8)
+        if len(bl) != 8:
+            raise EOFError
         n = int.from_bytes(bl, 'little')
         raw = self.con.recv(n)
         if len(raw) != n:
