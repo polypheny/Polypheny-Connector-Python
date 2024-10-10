@@ -6,6 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import os
+
 project = 'Polypheny-Connector-Python'
 copyright = '2024, The Polypheny Project'
 author = 'The Polypheny Project'
@@ -71,4 +73,4 @@ def linkcode_resolve(domain, info):
     if not Path('..', 'polypheny', filename).exists(): # and is_file
         return None
 
-    return "https://github.com/polypheny/Polypheny-Connector-Python/blob/proto-without-grpc/polypheny/{}#L{}".format(filename, lineno)
+    return "https://github.com/polypheny/Polypheny-Connector-Python/blob/{}/polypheny/{}#L{}".format(os.environ.get('GITHUB_SHA', 'master'), filename, lineno)
