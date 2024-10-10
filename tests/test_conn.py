@@ -18,16 +18,6 @@ import time
 
 from test_helper import con, cur
 
-# Heartbeat: isActive is only set to true, if the checkConnection
-# call is made --- not for any of the others.  This would test
-# that an active client would be kicked
-#def test_heartbeat(cur):
-#    while True:
-#        cur.execute("SELECT 1");
-#        for row in cur:
-#            assert row[0] == 1
-#        time.sleep(0.3)
-
 # tests the con fixture helper works
 def test_conn(con):
     pass
