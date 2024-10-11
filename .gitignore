@@ -19,11 +19,11 @@ sdist/
 var/
 .installed.cfg
 /dist/
-/doc/_build/
+/docs/_build/
 /doc/build/
 *.pyc
 debug.py
-*.proto
+#*.proto
 polypheny-avatica-tmp/
 
 # core dumps
@@ -33,3 +33,9 @@ core.*
 .vscode
 
 .DS_STORE
+
+venv/
+
+.idea
+
+.coverage
