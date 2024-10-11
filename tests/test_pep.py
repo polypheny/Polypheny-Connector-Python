@@ -479,7 +479,6 @@ def test_cursor_close(cur):
 #     database-specific notation (see the module's paramstyle_ attribute
 #     for details). [5]_
 def test_cursor_execute(cur_with_data):
-    pytest.skip('dict example does not work')
     cur = cur_with_data
     cur.execute('SELECT * FROM customers')
     cur.execute('SELECT * FROM customers WHERE year_joined > ?', (2007,))
