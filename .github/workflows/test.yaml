@@ -1,9 +1,8 @@
 name: Runs the tests
 
 on:
-  push:
-    branches:
-      - proto-without-grpc
+  - push
+  - pull_request
 
 jobs:
   build-polypheny:
