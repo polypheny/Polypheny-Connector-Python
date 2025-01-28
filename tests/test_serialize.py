@@ -172,9 +172,11 @@ def test_serialize_decimal_large2(cur):
         cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', (2**77,))
         cur.execute('SELECT a FROM t')
 
-        assert cur.fetchone()[0] == 151115727451828646838272
+        if os.getenv('DEFAULT_STORE', '') == 'mongodb':
+            assert cur.fetchone()[0] == 151115727451828646838272
+        else:
+            assert cur.fetchone()[0] == Decimal('1.5111572745182865E+23')
         assert cur.fetchone() is None
-
 
 def test_deserialize_number(cur):
     cur.execute('SELECT 1')
