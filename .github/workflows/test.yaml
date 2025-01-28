@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: polypheny/GitHub-Action-Build-Polypheny@main
         with:
-          branch: various-improvements
+          branch: master
 
   test-system-python:
     timeout-minutes: 10
