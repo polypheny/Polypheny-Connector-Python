@@ -16,7 +16,7 @@ from polypheny.connection import Connection, Cursor
 from polypheny.exceptions import *
 
 import datetime
-from typing import Union, Tuple
+from typing import Union
 
 # See https://peps.python.org/pep-0249/#globals
 apilevel = '2.0'
@@ -64,8 +64,8 @@ def Binary(string):
 # ROWID = 5
 
 
-# TODO: Change Tuple to tuple when Python 3.8 is no longer supported
-def connect(address: Union[Tuple[str, int], str] = None, *, username: str = None, password: str = None,
+
+def connect(address: Union[tuple[str, int], str] = None, *, username: str = None, password: str = None,
             transport: str = None, **kwargs) -> Connection:
     """
     Connect to a Polypheny instance with the given parameters.  When
