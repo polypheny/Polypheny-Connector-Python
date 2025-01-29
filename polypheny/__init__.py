@@ -64,7 +64,6 @@ def Binary(string):
 # ROWID = 5
 
 
-
 def connect(address: Union[tuple[str, int], str] = None, *, username: str = None, password: str = None,
             transport: str = None, **kwargs) -> Connection:
     """

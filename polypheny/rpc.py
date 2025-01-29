@@ -97,7 +97,7 @@ class Connection:
             return
         try:
             self.disconnect()
-        except Exception as e:
+        except Exception:
             pass
 
         try:
