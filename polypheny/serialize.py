@@ -16,8 +16,9 @@ import datetime
 import decimal
 from functools import reduce
 
-import polypheny.interval as interval
 from org.polypheny.prism import value_pb2
+
+import polypheny.interval as interval
 
 
 def serialize_big_decimal(v, value):
@@ -130,3 +131,32 @@ def proto2py(value):
         return res
     else:
         raise RuntimeError("Unhandled value type")
+
+
+def proto_node2py(proto_node):
+    properties_dict = {}
+    for entry in proto_node.properties:
+        properties_dict[proto2py(entry.key)] = proto2py(entry.value)
+
+    return {
+        'id': proto_node.id,
+        'name': proto_node.name,
+        'properties': properties_dict,
+        'labels': list(proto_node.labels)
+    }
+
+
+def proto_edge2py(proto_edge):
+    properties_dict = {}
+    for entry in proto_edge.properties:
+        properties_dict[proto2py(entry.key)] = proto2py(entry.value)
+
+    return {
+        'id': proto_edge.id,
+        'name': proto_edge.name,
+        'properties': properties_dict,
+        'labels': list(proto_edge.labels),
+        'source': proto_edge.source,
+        'target': proto_edge.target,
+        'direction': proto_edge.direction
+    }
