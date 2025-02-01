@@ -1,0 +1,170 @@
+name: Runs the tests
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build-polypheny:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: polypheny/GitHub-Action-Build-Polypheny@main
+        with:
+          branch: master
+
+  test-system-python:
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    needs: build-polypheny
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.version }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Checkout driver
+        uses: actions/checkout@v4
+
+      - name: Set Version
+        id: version
+        run: echo "v0.0.0" > polypheny-connector-version.txt
+
+      - name: Create MANIFEST.in
+        run: echo "include polypheny-connector-version.txt" > MANIFEST.in
+
+      - name: Install driver dependencies
+        run: pip install -r requirements.txt
+
+      - name: Load Polypheny JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: polypheny-jar
+
+      - name: Run tests
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
+        with:
+          cmd: pytest --doctest-modules -v
+          jar: polypheny.jar
+          autodocker: ${{ matrix.os != 'windows' }}
+        timeout-minutes: 10
+
+      - name: Install locally
+        run: pip install .
+
+      - name: Run tests in docs
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
+        with:
+          cmd: make doctest
+          jar: ../polypheny.jar
+          autodocker: ${{ matrix.os != 'windows' }}
+          working-directory: docs
+
+  test-stores:
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        adapter: [ mongodb, hsqldb, monetdb, postgresql, file, cottontail, neo4j ]
+    runs-on: ubuntu-latest
+    needs: build-polypheny
+    steps:
+      - name: Set store env variable
+        run: |
+            echo "DEFAULT_STORE=${{ matrix.adapter }}" >> $GITHUB_ENV
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Checkout driver
+        uses: actions/checkout@v4
+
+      - name: Set Version
+        id: version
+        run: echo "v0.0.0" > polypheny-connector-version.txt
+
+      - name: Create MANIFEST.in
+        run: echo "include polypheny-connector-version.txt" > MANIFEST.in
+
+      - name: Install driver dependencies
+        run: pip install -r requirements.txt
+
+      - name: Load Polypheny JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: polypheny-jar
+
+      - name: Run tests
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
+        with:
+          cmd: pytest --doctest-modules -v
+          jar: polypheny.jar
+          default-store: ${{ matrix.adapter }}
+        timeout-minutes: 10
+
+      - name: Install locally
+        run: pip install .
+
+      - name: Run tests in docs
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
+        with:
+          cmd: make doctest
+          jar: ../polypheny.jar
+          working-directory: docs
+          default-store: ${{ matrix.adapter }}
+
+  build-docs:
+    timeout-minutes: 2
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Checkout driver
+        uses: actions/checkout@v4
+
+      - name: Set Version
+        id: version
+        run: echo "v0.0.0" > polypheny-connector-version.txt
+
+      - name: Create MANIFEST.in
+        run: echo "include polypheny-connector-version.txt" > MANIFEST.in
+        
+      - name: Install driver dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install markdown generator
+        run: pip install sphinx-markdown-builder
+
+      - name: Install locally
+        run: pip install .
+
+      - name: Generate documentation (markdown)
+        run: make markdown
+        working-directory: docs
+
+      - name: Generate documentation (HTML)
+        run: make html
+        working-directory: docs
+
+      - name: Store docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: docs/_build
+

@@ -1,44 +1,36 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# Copyright 2019-2021 The Polypheny Project
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-# 
-#  http://www.apache.org/licenses/LICENSE-2.0
-# 
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-
-
 import os
 import sys
-
 from setuptools import setup, find_packages
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 CONNECTOR_SRC_DIR = os.path.join(THIS_DIR, "polypheny")
 
-
-VERSION = (1, 1, 1, None)  # Default
-
-try:
-    with open(
-        os.path.join(CONNECTOR_SRC_DIR, "generated_version.py"), encoding="utf-8"
-    ) as f:
-        exec(f.read())
-except Exception:
-    with open(os.path.join(CONNECTOR_SRC_DIR, "version.py"), encoding="utf-8") as f:
-        exec(f.read())
-version = ".".join([str(v) for v in VERSION if v is not None])
+VERSION = (0, 0, 0, None)  # Default
+VERSION = "v0.0.0" # Default
 
 
-# Parse command line flags
+version_file = 'polypheny-connector-version.txt'
+
+# necessary for automated build pipeline
+if os.path.exists(version_file):
+    with open(version_file, 'r') as f:
+        version = f.read().strip()
+
+else:
+    version = VERSION
+    #raise ValueError(f"Version file '{version_file}' not found. Please create the file with the version number.")
+
+
+#print(f"Building version: {version}")
+
+if not version.startswith('v'):
+    raise ValueError(f"Invalid version format: {version}. Expected format 'v0.0.0'.")
+
+# Strip the 'v' prefix for the version
+version = version[1:]
+
+
+### Parse command line flags
 
 # This list defines the options definitions in a set
 options_def = {
@@ -61,18 +53,18 @@ def readme():
 
 
 setup(
-    name="polypheny",
+    name='polypheny',
     version=version,
-    description="Polypheny Connector for Python",
+    description='Driver for Polypheny',
     long_description=readme(),
     long_description_content_type='text/markdown',
     author="The Polypheny Project",
     author_email="mail@polypheny.org",
-    url="https://polypheny.org/",
+    url="https://polypheny.com/",
     project_urls={
-        "Documentation": "https://polypheny.org/documentation/",
+        "Documentation": "https://docs.polypheny.com/en/latest/drivers/python/overview",
         "Code": "https://github.com/polypheny/Polypheny-Connector-Python",
-        "Issue tracker": "https://github.com/polypheny/Polypheny-DB/labels/A-python",
+        "Issue tracker": "https://github.com/polypheny/Polypheny-DB/labels/A-python"
     },
     license="Apache License, Version 2.0",
     packages=find_packages(),
@@ -83,11 +75,8 @@ setup(
             'release': ('setup.py', version),
         },
     },
-    classifiers=[
-        'Programming Language :: Python :: 3.6',
-    ],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=[
-         'protobuf>=3.0.0',
-    ]
+        "polypheny-prism-api==1.9",
+    ],
 )

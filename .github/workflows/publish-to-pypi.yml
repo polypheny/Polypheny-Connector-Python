@@ -1,39 +1,28 @@
-name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-
+name: Publish Python 🐍 distributions 📦 to PyPI
 on:
-  # Trigger the workflow on push , PR or release publish,
-  # but only for the main branch
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-  release:
-    types:
-      - published
-      - released
-      
+    release:
+        types:
+            - published
 jobs:
-  build-n-publish:
-    name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@master
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.9
-    - name: Build package
-      run: python setup.py sdist
-    - name: Publish distribution 📦 to Test PyPI
-      if: github.event_name == 'push'
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
-    - name: Publish distribution 📦 to PyPI
-      if: github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+    publish:
+        name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            packages: write
+            id-token: write 
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v5
+              with:
+                  python-version: 3.8
+            - name: Set Version
+              id: version
+              run: echo "${GITHUB_REF#refs/tags/}" > polypheny-connector-version.txt
+            - name: Create MANIFEST.in
+              run: echo "include polypheny-connector-version.txt" > MANIFEST.in
+            - name: Build package
+              run: python setup.py sdist
+            - name: Publish distribution 📦 to PyPI
+              uses: pypa/gh-action-pypi-publish@release/v1
