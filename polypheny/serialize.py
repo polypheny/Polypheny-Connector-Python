@@ -122,11 +122,8 @@ def proto2py(value):
         return list(map(lambda e: proto2py(e), value.list.values))
     elif name == "document":
         res = {}
-        for entry in value.document.entries:
-            k = proto2py(entry.key)
-            assert isinstance(k, str)  # TODO: Correct?
-            v = proto2py(entry.value)
-            res[k] = v
+        for key in value.document.entries:
+            res[key] = proto2py(value.document.entries[key])
         return res
     else:
         raise RuntimeError("Unhandled value type")
