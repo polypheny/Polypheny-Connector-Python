@@ -74,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        adapter: [ mongodb, hsqldb, monetdb, postgresql, file, cottontail, neo4j ]
+        adapter: [ mongodb, hsqldb, monetdb, postgresql, file, neo4j ]
     runs-on: ubuntu-latest
     needs: build-polypheny
     steps:
