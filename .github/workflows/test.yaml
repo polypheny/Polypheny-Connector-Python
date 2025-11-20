@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: polypheny/GitHub-Action-Build-Polypheny@main
         with:
-          branch: master
+          branch: update-prism-api
 
   test-system-python:
     timeout-minutes: 10
