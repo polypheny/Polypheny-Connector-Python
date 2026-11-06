@@ -83,6 +83,46 @@ Run the tests with coverage report:
 coverage run --source polypheny -m pytest && coverage report -m
 ```
 
+### Document metadata integration tests
+
+The document metadata suites cover the existing Prism `EntitiesRequest` /
+`EntitiesResponse` exchange, all `Document` and `DocumentField` properties,
+nested paths, heterogeneous and nullable values, sample JSON, collection
+filters, empty namespaces, and relational metadata regression. The MongoDB
+suite verifies every `DocumentIndex` property against real unique B-tree,
+hash, nested-field, and wildcard indexes.
+
+Until the extended Prism schema is released, use the companion API revision
+and a Polypheny server with document metadata support. The helper generates
+only the extended namespace metadata module into a temporary directory; the
+remaining wire definitions and handshake use the installed Prism API 1.9:
+
+```bash
+python -m pip install -r requirements.txt grpcio-tools==1.62.3 pymongo==4.10.1
+git clone https://github.com/polypheny/Polypheny-Prism-API.git ../Polypheny-Prism-API
+git -C ../Polypheny-Prism-API checkout 9b64b905d9dae2bb8b09592d907f0c5b1c69e2ec
+python scripts/test_document_metadata.py --prism-api ../Polypheny-Prism-API
+```
+
+The suites use plain Prism at `127.0.0.1:20590`, user `pa`, and an empty
+password. Override these with `POLYPHENY_PRISM_HOST`, `POLYPHENY_PRISM_PORT`,
+`POLYPHENY_PRISM_USER`, and `POLYPHENY_PRISM_PASSWORD` when needed.
+
+Run the real index tests with `--mongo`. They also require a MongoDB replica
+set, reachable by both the tests and Polypheny at `127.0.0.1:27017` by default.
+Set `POLYPHENY_MONGO_HOST` and `POLYPHENY_MONGO_PORT` for another endpoint.
+The tests create a private MongoDB database and a temporary Polypheny source
+adapter, then remove both. Explicit runs fail if a required service is missing.
+
+```bash
+python scripts/test_document_metadata.py --prism-api ../Polypheny-Prism-API --mongo
+```
+
+The dedicated `Document metadata integration` workflow runs both suites and
+the Prism wire-contract tests against the companion server branch; its manual
+trigger accepts a different `db_ref`. The ordinary connector matrix continues
+to exercise the released Prism API.
+
 
 ## Roadmap
 See the [open issues](https://github.com/polypheny/Polypheny-DB/labels/A-python) for a list of proposed features (and known issues).

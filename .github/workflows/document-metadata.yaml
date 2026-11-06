@@ -1,0 +1,96 @@
+name: Document metadata integration
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      db_ref:
+        description: Polypheny-DB revision containing document metadata support
+        default: 24797eb5548e3ca07f15a1a12ecf236327751de1
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-polypheny:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: polypheny/GitHub-Action-Build-Polypheny@main
+        with:
+          branch: ${{ inputs.db_ref || '24797eb5548e3ca07f15a1a12ecf236327751de1' }}
+
+  document-metadata:
+    timeout-minutes: 15
+    runs-on: ubuntu-24.04
+    needs: build-polypheny
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: polypheny/Polypheny-Prism-API
+          ref: ac57da2459071234c4cacc6836e3f4ca6f13f101
+          path: .metadata-prism
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt grpcio-tools==1.62.3 pymongo==4.10.1
+
+      - name: Validate Prism wire contract
+        run: python -m unittest discover -s .metadata-prism/tests -v
+
+      - name: Start MongoDB replica set
+        run: |
+          docker run --detach --name prism-metadata-mongo --publish 27017:27017 mongo:7.0 --replSet prism --bind_ip_all
+          python - <<'PY'
+          import time
+          from pymongo import MongoClient
+          from pymongo.errors import PyMongoError
+          client = MongoClient('127.0.0.1', 27017, directConnection=True, serverSelectionTimeoutMS=1000)
+          deadline = time.monotonic() + 60
+          while True:
+              try:
+                  client.admin.command('ping')
+                  break
+              except PyMongoError:
+                  if time.monotonic() >= deadline:
+                      raise
+                  time.sleep(1)
+          client.admin.command('replSetInitiate', {'_id': 'prism', 'members': [{'_id': 0, 'host': '127.0.0.1:27017'}]})
+          while not client.admin.command('hello').get('isWritablePrimary'):
+              if time.monotonic() >= deadline:
+                  raise RuntimeError('MongoDB did not elect a primary')
+              time.sleep(0.2)
+          client.close()
+          PY
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: polypheny-jar
+
+      - name: Run live document and index metadata suites
+        uses: polypheny/GitHub-Action-Run-Polypheny@v0.2.0
+        with:
+          cmd: python scripts/test_document_metadata.py --prism-api .metadata-prism --mongo
+          jar: polypheny.jar
+          autodocker: false
+        timeout-minutes: 10
+
+      - name: MongoDB logs
+        if: failure()
+        run: docker logs prism-metadata-mongo
+
+      - name: Stop MongoDB
+        if: always()
+        run: docker rm --force prism-metadata-mongo
