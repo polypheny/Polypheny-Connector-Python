@@ -7,7 +7,7 @@ on:
     inputs:
       db_ref:
         description: Polypheny-DB revision containing document metadata support
-        default: 24797eb5548e3ca07f15a1a12ecf236327751de1
+        default: a35687bda0f5f13a40eda56a2ab340faf4977d2c
         required: true
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: polypheny/Polypheny-DB
-          ref: ${{ inputs.db_ref || '24797eb5548e3ca07f15a1a12ecf236327751de1' }}
+          ref: ${{ inputs.db_ref || 'a35687bda0f5f13a40eda56a2ab340faf4977d2c' }}
 
       - uses: actions/setup-java@v4
         with:
@@ -31,7 +31,7 @@ jobs:
       - name: Build server and plugins and validate Java metadata
         run: >-
           ./gradlew :dbms:shadowJar assemblePlugins
-          :plugins:prism-interface:test --tests '*DocumentMetaRetrieverTest'
+          :plugins:prism-interface:test
           :plugins:mongodb-adapter:test --tests '*MongoIndexMetadataTest'
           -PwithoutpullingUi=true --console=plain
 
