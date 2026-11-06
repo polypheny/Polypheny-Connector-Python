@@ -26,13 +26,16 @@ import time
 import uuid
 
 import pytest
-from pymongo import MongoClient
 
 from document_metadata import con, get_document, document_metadata_schema
 
 
 @pytest.fixture
 def mongo_source(con):
+    # Ordinary --doctest-modules collection also imports this opt-in module.
+    # Require pymongo only when its live MongoDB fixture is actually executed.
+    from pymongo import MongoClient
+
     suffix = uuid.uuid4().hex
     database = "prism_metadata_" + suffix
     adapter = "prism_mongo_" + suffix
