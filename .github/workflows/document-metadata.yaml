@@ -18,9 +18,46 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     steps:
-      - uses: polypheny/GitHub-Action-Build-Polypheny@main
+      - uses: actions/checkout@v4
         with:
-          branch: ${{ inputs.db_ref || '24797eb5548e3ca07f15a1a12ecf236327751de1' }}
+          repository: polypheny/Polypheny-DB
+          ref: ${{ inputs.db_ref || '24797eb5548e3ca07f15a1a12ecf236327751de1' }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build server and plugins and validate Java metadata
+        run: >-
+          ./gradlew :dbms:shadowJar assemblePlugins
+          :plugins:prism-interface:test --tests '*DocumentMetaRetrieverTest'
+          :plugins:mongodb-adapter:test --tests '*MongoIndexMetadataTest'
+          -PwithoutpullingUi=true --console=plain
+
+      - name: Produce final executable server JAR
+        # dbms:jar and dbms:shadowJar currently share an output path. Run the
+        # shadow task last so the uploaded artifact contains runtime classes.
+        run: ./gradlew :dbms:shadowJar -PwithoutpullingUi=true --console=plain
+
+      - name: Select executable server JAR
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          import zipfile
+          candidates = [path for path in Path('dbms/build/libs').glob('dbms-*.jar')
+                        if not path.stem.endswith(('-tests', '-sources', '-javadoc'))]
+          assert len(candidates) == 1, f'Expected one executable JAR, found {candidates}'
+          with zipfile.ZipFile(candidates[0]) as archive:
+              assert 'org/slf4j/Logger.class' in archive.namelist(), 'Server JAR lacks runtime dependencies'
+          shutil.copyfile(candidates[0], 'polypheny.jar')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: polypheny-jar
+          path: polypheny.jar
 
   document-metadata:
     timeout-minutes: 15
