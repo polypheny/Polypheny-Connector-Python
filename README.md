@@ -25,6 +25,8 @@ cd /path/to/polyphney-connector-python-x.y.z/
 python setup.py install
 ```
 
+The connector uses Prism API 2.2 and requires a Polypheny server with Prism 2.x support.
+
 
 ## Getting Started
 
@@ -92,36 +94,33 @@ filters, empty namespaces, and relational metadata regression. The MongoDB
 suite verifies every `DocumentIndex` property against real unique B-tree,
 hash, nested-field, and wildcard indexes.
 
-Until the extended Prism schema is released, use the companion API revision
-and a Polypheny server with document metadata support. The helper generates
-only the extended namespace metadata module into a temporary directory; the
-remaining wire definitions and handshake use the installed Prism API 1.9:
+Use a Polypheny server that supports Prism 2.2 and document metadata. Install
+the test requirements to get the released Prism API package.
 
 ```bash
-python -m pip install -r requirements.txt grpcio-tools==1.62.3 pymongo==4.10.1
-git clone https://github.com/polypheny/Polypheny-Prism-API.git ../Polypheny-Prism-API
-git -C ../Polypheny-Prism-API checkout 9b64b905d9dae2bb8b09592d907f0c5b1c69e2ec
-python scripts/test_document_metadata.py --prism-api ../Polypheny-Prism-API
+python -m pip install -r requirements.txt
+python -m pytest -v tests/document_metadata.py
 ```
 
 The suites use plain Prism at `127.0.0.1:20590`, user `pa`, and an empty
 password. Override these with `POLYPHENY_PRISM_HOST`, `POLYPHENY_PRISM_PORT`,
 `POLYPHENY_PRISM_USER`, and `POLYPHENY_PRISM_PASSWORD` when needed.
 
-Run the real index tests with `--mongo`. They also require a MongoDB replica
-set, reachable by both the tests and Polypheny at `127.0.0.1:27017` by default.
+The index tests also require a MongoDB replica set, reachable by both the tests
+and Polypheny at `127.0.0.1:27017` by default.
 Set `POLYPHENY_MONGO_HOST` and `POLYPHENY_MONGO_PORT` for another endpoint.
 The tests create a private MongoDB database and a temporary Polypheny source
 adapter, then remove both. Explicit runs fail if a required service is missing.
 
 ```bash
-python scripts/test_document_metadata.py --prism-api ../Polypheny-Prism-API --mongo
+python -m pip install pymongo==4.10.1
+python -m pytest -v tests/document_metadata_mongo.py
 ```
 
-The dedicated `Document metadata integration` workflow runs both suites and
-the Prism wire-contract tests against the companion server branch; its manual
-trigger accepts a different `db_ref`. The ordinary connector matrix continues
-to exercise the released Prism API.
+The `Document metadata integration` workflow runs both suites. Its manual
+trigger accepts a `db_ref` for testing a different server build. Set the
+`POLYPHENY_DB_REF` repository Actions variable to use the same server revision
+in both integration workflows.
 
 
 ## Roadmap

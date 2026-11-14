@@ -15,9 +15,8 @@
 """Live regression tests for document metadata over the ordinary Prism RPC.
 
 Run explicitly with ``pytest tests/document_metadata.py``. These tests need
-Polypheny with the companion document metadata change and Python bindings
-generated from the corresponding Prism definitions. They connect to the
-ordinary plain Prism endpoint, just like the connector's Windows tests.
+Polypheny with document metadata support and the released Prism API package.
+They connect to the same plain Prism endpoint as the connector's Windows tests.
 """
 
 import json
@@ -113,8 +112,8 @@ def get_entities(connection, namespace, pattern=None):
 def document_metadata_schema():
     fields = namespace_meta_responses_pb2.Document.DESCRIPTOR.fields_by_name
     assert "collection_name" in fields, (
-        "Document metadata requires the companion Prism schema. Run "
-        "python scripts/test_document_metadata.py --prism-api /path/to/Polypheny-Prism-API"
+        "Document metadata requires Prism API 2.2. Install the test dependencies "
+        "with python -m pip install -r requirements.txt"
     )
 
 
