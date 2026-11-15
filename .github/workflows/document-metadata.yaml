@@ -15,7 +15,7 @@ permissions:
 jobs:
   build-polypheny:
     timeout-minutes: 30
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,7 +60,7 @@ jobs:
 
   document-metadata:
     timeout-minutes: 15
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     needs: build-polypheny
     steps:
       - uses: actions/checkout@v4

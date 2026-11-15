@@ -25,7 +25,9 @@ cd /path/to/polyphney-connector-python-x.y.z/
 python setup.py install
 ```
 
-The connector uses Prism API 2.2 and requires a Polypheny server with Prism 2.x support.
+The connector uses the Prism 2.2 client definitions and connects to servers
+that report a compatible Prism 2.x API. The minor versions do not have to match.
+Document collection metadata requires server-side support introduced in Prism 2.2.
 
 
 ## Getting Started
@@ -84,44 +86,6 @@ Run the tests with coverage report:
 ```
 coverage run --source polypheny -m pytest && coverage report -m
 ```
-
-### Document metadata integration tests
-
-The document metadata suites cover the existing Prism `EntitiesRequest` /
-`EntitiesResponse` exchange, all `Document` and `DocumentField` properties,
-nested paths, heterogeneous and nullable values, sample JSON, collection
-filters, empty namespaces, and relational metadata regression. The MongoDB
-suite verifies every `DocumentIndex` property against real unique B-tree,
-hash, nested-field, and wildcard indexes.
-
-Use a Polypheny server that supports Prism 2.2 and document metadata. Install
-the test requirements to get the released Prism API package.
-
-```bash
-python -m pip install -r requirements.txt
-python -m pytest -v tests/document_metadata.py
-```
-
-The suites use plain Prism at `127.0.0.1:20590`, user `pa`, and an empty
-password. Override these with `POLYPHENY_PRISM_HOST`, `POLYPHENY_PRISM_PORT`,
-`POLYPHENY_PRISM_USER`, and `POLYPHENY_PRISM_PASSWORD` when needed.
-
-The index tests also require a MongoDB replica set, reachable by both the tests
-and Polypheny at `127.0.0.1:27017` by default.
-Set `POLYPHENY_MONGO_HOST` and `POLYPHENY_MONGO_PORT` for another endpoint.
-The tests create a private MongoDB database and a temporary Polypheny source
-adapter, then remove both. Explicit runs fail if a required service is missing.
-
-```bash
-python -m pip install pymongo==4.10.1
-python -m pytest -v tests/document_metadata_mongo.py
-```
-
-The `Document metadata integration` workflow runs both suites. Its manual
-trigger accepts a `db_ref` for testing a different server build. Set the
-`POLYPHENY_DB_REF` repository Actions variable to use the same server revision
-in both integration workflows.
-
 
 ## Roadmap
 See the [open issues](https://github.com/polypheny/Polypheny-DB/labels/A-python) for a list of proposed features (and known issues).

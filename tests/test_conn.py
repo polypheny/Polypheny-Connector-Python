@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import polypheny
+import polypheny.rpc as rpc
 import pytest
 import time
 
@@ -99,12 +100,18 @@ def test_invalid_creds():
     with pytest.raises(polypheny.Error):
         polypheny.connect(('127.0.0.1', 20590), username='unknown', password='', transport='plain')
 
-def test_invalid_version():
-    import polypheny.rpc as rpc
-    major = rpc.POLYPHENY_API_MAJOR
+@pytest.mark.parametrize('minor_offset', [-1, 1])
+def test_compatible_prism_minor_version(monkeypatch, minor_offset):
+    monkeypatch.setattr(rpc, 'POLYPHENY_API_MINOR', rpc.POLYPHENY_API_MINOR + minor_offset)
+    connection = polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
     try:
-        with pytest.raises(polypheny.Error):
-            rpc.POLYPHENY_API_MAJOR = major - 1
-            polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
+        cursor = connection.cursor()
+        cursor.execute('SELECT 1')
+        assert cursor.fetchone()[0] == 1
     finally:
-        rpc.POLYPHENY_API_MAJOR = major
+        connection.close()
+
+def test_invalid_version(monkeypatch):
+    monkeypatch.setattr(rpc, 'POLYPHENY_API_MAJOR', rpc.POLYPHENY_API_MAJOR - 1)
+    with pytest.raises(polypheny.Error, match='incompatible with Server version'):
+        polypheny.connect(('127.0.0.1', 20590), username='pa', password='', transport='plain')
