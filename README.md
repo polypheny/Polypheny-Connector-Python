@@ -25,6 +25,10 @@ cd /path/to/polyphney-connector-python-x.y.z/
 python setup.py install
 ```
 
+The connector uses the Prism 2.2 client definitions and connects to servers
+that report a compatible Prism 2.x API. The minor versions do not have to match.
+Document collection metadata requires server-side support introduced in Prism 2.2.
+
 
 ## Getting Started
 
@@ -82,7 +86,6 @@ Run the tests with coverage report:
 ```
 coverage run --source polypheny -m pytest && coverage report -m
 ```
-
 
 ## Roadmap
 See the [open issues](https://github.com/polypheny/Polypheny-DB/labels/A-python) for a list of proposed features (and known issues).
