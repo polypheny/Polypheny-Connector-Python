@@ -75,7 +75,7 @@ setup(
             'release': ('setup.py', version),
         },
     },
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=[
         "polypheny-prism-api==2.2",
     ],

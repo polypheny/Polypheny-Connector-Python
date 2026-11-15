@@ -1,28 +1,88 @@
-name: Publish Python 🐍 distributions 📦 to PyPI
+name: Publish Python distributions to PyPI
+
 on:
-    release:
-        types:
-            - published
+  pull_request:
+    paths:
+      - '.github/workflows/publish-to-pypi.yml'
+      - 'MANIFEST.in'
+      - 'README.md'
+      - 'polypheny/**'
+      - 'pyproject.toml'
+      - 'setup.py'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Version to build without publishing (e.g. v2.0.0)
+        default: v0.0.0
+        type: string
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
 jobs:
-    publish:
-        name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-            packages: write
-            id-token: write 
-        steps:
-            - uses: actions/checkout@v4
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v5
-              with:
-                  python-version: 3.8
-            - name: Set Version
-              id: version
-              run: echo "${GITHUB_REF#refs/tags/}" > polypheny-connector-version.txt
-            - name: Create MANIFEST.in
-              run: echo "include polypheny-connector-version.txt" > MANIFEST.in
-            - name: Build package
-              run: python setup.py sdist
-            - name: Publish distribution 📦 to PyPI
-              uses: pypa/gh-action-pypi-publish@release/v1
+  build:
+    name: Build and verify Python distributions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag || 'v0.0.0' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set package version
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo 'Expected a vMAJOR.MINOR.PATCH version, for example v2.0.0.' >&2
+            exit 1
+          fi
+          printf '%s\n' "$RELEASE_TAG" > polypheny-connector-version.txt
+
+      - name: Build source distribution and wheel
+        run: |
+          python -m pip install 'build==1.6.1' 'twine==7.0.0'
+          python -m build
+
+      - name: Check metadata and test installed wheel
+        run: |
+          python -m twine check --strict dist/*
+          python -m venv "$RUNNER_TEMP/polypheny-release"
+          smoke_python="$RUNNER_TEMP/polypheny-release/bin/python"
+          "$smoke_python" -m pip install dist/*.whl
+          "$smoke_python" -m pip check
+          "$smoke_python" -I - <<'PY'
+          import os
+          from importlib.metadata import version
+
+          import polypheny
+
+          assert version("polypheny") == os.environ["RELEASE_TAG"][1:]
+          assert callable(polypheny.connect)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish verified distributions to PyPI
+    if: github.event_name == 'release' && !github.event.release.prerelease
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
