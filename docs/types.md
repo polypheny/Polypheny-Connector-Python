@@ -1,44 +1,58 @@
-# Types
+# Value Types
 
-This page gives an overview how values are converted between Polypheny
-and Python.  For more information of the Polypheny Types check
-[this](https://docs.polypheny.com/en/latest/concepts/data-types) page.
+The Prism value type sent by the server determines the Python result. The
+[official data type guide](https://docs.polypheny.com/en/latest/concepts/data-types)
+describes database types.
 
 ## Polypheny to Python
 
-| Polypheny                 | Python                               | Notes                                                                                             |
-|---------------------------|--------------------------------------|---------------------------------------------------------------------------------------------------|
-| BIGINT                    | {py:class}`int`                      |                                                                                                   |
-| BOOLEAN                   | {py:class}`bool`                     |                                                                                                   |
-| DATE                      | {py:class}`datetime.date`            |                                                                                                   |
-| DECIMAL                   | {py:class}`int` or {py:class}`float` | Python type depends on if `DECIMAL` is a whole number or not.                                     |
-| DOUBLE                    | {py:class}`float`                    |                                                                                                   |
-| INTEGER                   | {py:class}`int`                      |                                                                                                   |
-| REAL                      | {py:class}`float`                    |                                                                                                   |
-| SMALLINT                  | {py:class}`int`                      |                                                                                                   |
-| TEXT                      | {py:class}`str`                      |                                                                                                   |
-| TIME                      | {py:class}`datetime.time`            |                                                                                                   |
-| TIMESTAMP                 | {py:class}`datetime.datetime`        | When converting a `TIMESTAMP` to {py:class}`datetime.datetime` the timezone is always set to UTC. |
-| TINYINT                   | {py:class}`int`                      |                                                                                                   |
-| VARCHAR                   | {py:class}`str`                      |                                                                                                   |
-| AUDIO, FILE, IMAGE, VIDEO | {py:class}`bytes`                    |                                                                                                   |
+| Prism value | Python result |
+| --- | --- |
+| Boolean | `bool` |
+| 32-bit or 64-bit integer | `int` |
+| Big decimal | `decimal.Decimal`, including integral decimal values |
+| Float or double | `float` |
+| Date | `datetime.date` |
+| Time | `datetime.time` with millisecond precision |
+| Timestamp | A timezone-aware `datetime.datetime` in UTC |
+| String | `str` |
+| Binary | `bytes` |
+| Null | `None` |
+| List | `list` with recursively converted elements |
+| Document | `dict` with string keys and recursively converted values |
+| Interval | {doc}`interval` value |
+| Graph node or edge | `dict` with identity, labels, and properties |
+| Graph path or graph value | `dict` with `nodes` and `edges` lists |
 
-### Special types
-
-| Special Type              | Python Type       | Notes |
-|---------------------------|-------------------|-------|
-| Arrays                    | {py:class}`list`  |       |
-| Documents                 | {py:class}`dict`  |       |
-
-### Intervals
-To learn more about intervals see {doc}`interval`.
+SQL `DECIMAL` values are decoded as `Decimal`. Relational rows are lists of
+values in column order. Nested values in documents, lists, and graph properties
+are decoded recursively. See {doc}`graph` for graph dictionary keys and result
+formats.
 
 ## Python to Polypheny
 
-The following types can be serialized by the Python driver:
+| Parameter value | Prism representation |
+| --- | --- |
+| `bool` | Boolean |
+| `int` | 32-bit integer or 64-bit integer when in range, then big decimal |
+| `float` | Double |
+| Finite `decimal.Decimal` | Big decimal |
+| `datetime.date` | Days since the Unix epoch |
+| `datetime.time` | Time of day. Use whole seconds for parameters. |
+| `datetime.datetime` | Unix epoch milliseconds. Naive datetimes use the process's local timezone. |
+| `str` | String |
+| `bytes` | Binary |
+| `None` | Null |
+| Nonempty `list` | List with recursively serialized elements |
 
-{py:class}`bool`, {py:class}`bytes`, {py:class}`datetime.date`,
-{py:class}`datetime.datetime`, {py:class}`datetime.time`,
-{py:class}`float`, {py:class}`int`, {py:class}`list` and
-{py:class}`str`.
+Use a timezone-aware datetime for consistent timestamp parameters across hosts.
+Use whole seconds for time parameters because the connector currently converts
+fractional seconds incorrectly.
 
+A list or tuple passed as `params` contains positional arguments. For a single
+array parameter, pass a nonempty list as one element, such as `([1, 2, 3],)`.
+A dictionary passed as `params` maps parameter names to values. Use
+language-specific expressions for document and interval values and Cypher
+statements to create or modify graph structures.
+
+[Official Python type conversion guide](https://docs.polypheny.com/en/latest/drivers/python/types)

@@ -14,6 +14,7 @@
 
 import os
 import socket
+from contextlib import suppress
 
 from polypheny.exceptions import Error
 from polypheny.serialize import *
@@ -35,14 +36,12 @@ class PlainTransport:
         self.exchange_version(self.VERSION)
 
     def exchange_version(self, version):
-        bl = self.con.recv(1)
-        if len(bl) != 1:
-            raise EOFError
+        bl = self._recv_exact(1)
         n = int.from_bytes(bl, byteorder='little')
         if n > 127:
             raise Error("Invalid version length")
-        remote_version = self.con.recv(n)
-        if remote_version[-1] != 0x0a:
+        remote_version = self._recv_exact(n)
+        if not remote_version.endswith(b'\n'):
             raise Error("Invalid version message")
 
         if remote_version[0:-1] != version.encode():
@@ -55,15 +54,18 @@ class PlainTransport:
         bl = n.to_bytes(length=8, byteorder='little')
         self.con.sendall(bl + serialized)
 
+    def _recv_exact(self, size):
+        data = bytearray()
+        while len(data) < size:
+            chunk = self.con.recv(size - len(data))
+            if not chunk:
+                raise EOFError
+            data.extend(chunk)
+        return bytes(data)
+
     def recv_msg(self):
-        bl = self.con.recv(8)
-        if len(bl) != 8:
-            raise EOFError
-        n = int.from_bytes(bl, 'little')
-        raw = self.con.recv(n)
-        if len(raw) != n:
-            raise EOFError
-        return raw
+        size = int.from_bytes(self._recv_exact(8), 'little')
+        return self._recv_exact(size)
 
     def close(self):
         if self.con is not None:
@@ -178,11 +180,19 @@ class Connection:
         msg.execute_unparameterized_statement_request.MergeFrom(req)
 
         self.send_msg(msg)
-        self.recv_msg()
-        r = self.recv_msg()
-        assert r.id == msg.id
-        assert r.last
-        return r.statement_response
+        started = self.recv_msg()
+        assert started.id == msg.id
+        assert not started.last and started.HasField("statement_response")
+        try:
+            completed = self.recv_msg()
+        except Error:
+            # Prism allocated a statement before evaluating the query.
+            with suppress(Error, OSError, EOFError):
+                self.close_statement(started.statement_response.statement_id)
+            raise
+        assert completed.id == msg.id
+        assert completed.last
+        return completed.statement_response
 
     def prepare_indexed_statement(self, language_name, statement, namespace):
         msg = self.new_request()

@@ -14,10 +14,10 @@
 
 from typing import List, Any
 
-from org.polypheny.prism import relational_frame_pb2
+from org.polypheny.prism import graph_frame_pb2, relational_frame_pb2, value_pb2
 from polypheny import rpc
 from polypheny.exceptions import *
-from polypheny.serialize import *
+from polypheny.serialize import proto2py, proto_graph_element2py
 
 
 class Connection:
@@ -103,22 +103,26 @@ class Connection:
 
 
 class ResultCursor:
+    _FRAME_ITEMS = {
+        'relational_frame': 'rows',
+        'document_frame': 'documents',
+        'graph_frame': 'element',
+    }
+
     def __init__(self, con, statement_id, frame, fetch_size):
         self.con = con
         self.statement_id = statement_id
         self.closed = False
         self.frame = frame
         self.fetch_size = fetch_size
-        if frame is not None:
-            restype = self.frame.WhichOneof('result')
-            assert restype is not None
-            if restype == 'relational_frame':
-                self.rows = iter(self.frame.relational_frame.rows)
-            elif restype == 'document_frame':
-                self.rows = iter(self.frame.document_frame.documents)
-            else:
-                self.closed = True
-                raise NotImplementedError(f'Resultset of type {restype} is not implemented')
+        self.rows = self._frame_items(frame) if frame is not None else None
+
+    def _frame_items(self, frame):
+        result_type = frame.WhichOneof('result')
+        if result_type not in self._FRAME_ITEMS:
+            self.close()
+            raise InterfaceError(f'Unsupported Prism result frame: {result_type}')
+        return iter(getattr(getattr(frame, result_type), self._FRAME_ITEMS[result_type]))
 
     def __del__(self):
         assert self.closed
@@ -141,17 +145,14 @@ class ResultCursor:
 
         assert self.rows is not None
 
-        try:
-            return next(self.rows)
-        except StopIteration:
-            if self.frame.is_last:
-                raise
-            return self.nextframe()
-
-    def nextframe(self):
-        self.frame = self.con.con.fetch(self.statement_id, self.fetch_size)
-        self.rows = iter(self.frame.relational_frame.rows)  # TODO result must not be relational
-        return next(self.rows)  # TODO: What happens if this returns StopIteration, but another frame could be fetched?
+        while True:
+            try:
+                return next(self.rows)
+            except StopIteration:
+                if self.frame.is_last:
+                    raise
+            self.frame = self.con.con.fetch(self.statement_id, self.fetch_size)
+            self.rows = self._frame_items(self.frame)
 
 
 class Cursor:
@@ -225,15 +226,15 @@ class Cursor:
         :param params:
         :param namespace: Sets the default namespace for the query.
 
-        .. Note::
-
-           Queries returning graphs are not supported yet.
-
         To query Polypheny using the MongoQL:
 
         >>> cur.executeany('mongo', 'db.fruits.find({"id": 1})')
         >>> print(cur.fetchone())
         {'id': 1, 'name': 'Orange'}
+
+        Use ``lang='cypher'`` with a graph namespace. Graph streams yield
+        one node or edge dictionary per item. Cypher projections returned
+        as relational rows can contain graph values alongside scalar values.
         """
 
         if self.con is None:
@@ -290,6 +291,8 @@ class Cursor:
             value = value_pb2.ProtoValue()
             value.document.CopyFrom(n)
             return proto2py(value)
+        elif isinstance(n, graph_frame_pb2.GraphElement):
+            return proto_graph_element2py(n)
         else:
             raise Error(f"Unknown result of type {type(n)}")
 

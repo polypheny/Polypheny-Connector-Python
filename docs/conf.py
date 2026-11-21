@@ -7,6 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import os
+from docutils import nodes
 
 project = 'Polypheny-Connector-Python'
 copyright = '2024, The Polypheny Project'
@@ -38,17 +39,25 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'alabaster'
-html_static_path = ['_static']
+
+
+def _markdown_abbreviation(_visitor, _node):
+    # The Markdown translator renders the child text, including a signature's *.
+    pass
+
+
+def setup(app):
+    app.add_node(nodes.abbreviation, override=True, markdown=(_markdown_abbreviation, _markdown_abbreviation))
 
 
 def linkcode_resolve(domain, info):
     if domain != 'py':
         return None
 
-    module = info['module']
+    module = info.get('module', '')
     parts = module.split('.')
     if parts[0] != 'polypheny':
-        raise "Not supported: {}".format(module)
+        return None
 
     mod = __import__(module)
 
