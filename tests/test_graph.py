@@ -137,9 +137,9 @@ def test_empty_graph_cursor_can_be_reused(graph):
     assert cur.fetchone() is None
     assert list(cur) == []
 
-    cur.executeany("cypher", "MATCH (n:Person) RETURN count(n) AS total", namespace=namespace)
-    assert [column[0] for column in cur.description] == ["total"]
-    assert cur.fetchall() == [[3]]
+    cur.executeany("cypher", "MATCH (n:Person) RETURN n.name AS name ORDER BY name", namespace=namespace)
+    assert [column[0] for column in cur.description] == ["name"]
+    assert cur.fetchall() == [[name] for name in PEOPLE]
 
 
 def test_scalar_projections_and_early_close(graph):
@@ -265,8 +265,8 @@ def test_reports_server_limit_on_prepared_cypher(graph, params):
     _, cur, namespace = graph
     with pytest.raises(polypheny.Error, match="Prepared Cypher statements are not supported by Prism"):
         cur.executeany("cypher", "MATCH (n:Person) RETURN n", params, namespace=namespace)
-    cur.executeany("cypher", "MATCH (n:Person) RETURN count(n) AS total", namespace=namespace)
-    assert cur.fetchall() == [[3]]
+    cur.executeany("cypher", "MATCH (n:Person) RETURN n.name AS name ORDER BY name", namespace=namespace)
+    assert cur.fetchall() == [[name] for name in PEOPLE]
 
 
 def test_graph_namespace_metadata(graph):
