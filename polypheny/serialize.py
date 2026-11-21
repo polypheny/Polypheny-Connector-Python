@@ -18,6 +18,7 @@ from functools import reduce
 
 import polypheny.interval as interval
 from org.polypheny.prism import value_pb2
+from polypheny.exceptions import InterfaceError
 
 
 def serialize_big_decimal(v, value):
@@ -122,5 +123,32 @@ def proto2py(value):
         return list(map(lambda e: proto2py(e), value.list.values))
     elif name == "document":
         return {key: proto2py(entry) for key, entry in value.document.entries.items()}
+    elif name in ("node", "edge"):
+        return _proto_node_or_edge2py(getattr(value, name))
+    elif name in ("path", "graph"):
+        graph = getattr(value, name)
+        return {
+            "nodes": [_proto_node_or_edge2py(node) for node in graph.nodes],
+            "edges": [_proto_node_or_edge2py(edge) for edge in graph.edges],
+        }
     else:
         raise RuntimeError("Unhandled value type")
+
+
+def _proto_node_or_edge2py(element):
+    result = {
+        "id": element.id,
+        "name": element.name,
+        "labels": list(element.labels),
+        "properties": {key: proto2py(value) for key, value in element.properties.items()},
+    }
+    if isinstance(element, value_pb2.ProtoEdge):
+        result.update(left=element.left, right=element.right, direction=element.direction)
+    return result
+
+
+def proto_graph_element2py(element):
+    kind = element.WhichOneof("element")
+    if kind is None:
+        raise InterfaceError("Prism graph element contains neither a node nor an edge")
+    return _proto_node_or_edge2py(getattr(element, kind))
