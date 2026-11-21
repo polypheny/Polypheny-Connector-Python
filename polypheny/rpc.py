@@ -14,6 +14,7 @@
 
 import os
 import socket
+from contextlib import suppress
 
 from polypheny.exceptions import Error
 from polypheny.serialize import *
@@ -179,11 +180,19 @@ class Connection:
         msg.execute_unparameterized_statement_request.MergeFrom(req)
 
         self.send_msg(msg)
-        self.recv_msg()
-        r = self.recv_msg()
-        assert r.id == msg.id
-        assert r.last
-        return r.statement_response
+        started = self.recv_msg()
+        assert started.id == msg.id
+        assert not started.last and started.HasField("statement_response")
+        try:
+            completed = self.recv_msg()
+        except Error:
+            # Prism allocated a statement before evaluating the query.
+            with suppress(Error, OSError, EOFError):
+                self.close_statement(started.statement_response.statement_id)
+            raise
+        assert completed.id == msg.id
+        assert completed.last
+        return completed.statement_response
 
     def prepare_indexed_statement(self, language_name, statement, namespace):
         msg = self.new_request()
