@@ -161,11 +161,13 @@ returns a :py:class:`dict` instead of a :py:class:`list`:
    {'id': 1, 'name': 'Orange'}
 
 The return type of :py:meth:`~polypheny.Cursor.fetchone` depends on the
-query.
+query. With the Cypher plugin enabled, pass ``cypher`` to
+:py:meth:`~polypheny.Cursor.executeany`` for graph queries. Graph streams
+yield one node or edge dictionary per item. Prism 2.3 can also return
+graph values inside relational rows alongside ordinary scalar columns.
+See the `Cypher and graph results guide`_ for examples and value shapes.
 
-.. note::
-
-   Queries returning results of type graph are not supported yet.
+.. _Cypher and graph results guide: https://docs.polypheny.com/en/latest/drivers/python/graph-results
 
 Indices and tables
 ==================

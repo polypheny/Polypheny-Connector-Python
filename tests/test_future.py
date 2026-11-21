@@ -17,16 +17,7 @@ This file contains tests that do not work yet, but should work in future version
 """
 import datetime
 
-import polypheny
-import pytest
-
-from test_helper import con, cur, cur_with_data
-
-def test_cypher(cur_with_data):
-    cur = cur_with_data
-    with pytest.raises(polypheny.Error):
-        cur.executeany('cypher', 'MATCH (e:customers) WHERE e.id = 1 RETURN e.name')
-        assert cur.fetchone()[0] == 'Maria'
+from test_helper import con, cur
 
 def test_serialize_time_with_micros(cur):
     cur.execute('DROP TABLE IF EXISTS t')
