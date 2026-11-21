@@ -16,6 +16,7 @@ from polypheny.connection import Connection, Cursor
 from polypheny.exceptions import *
 
 import datetime
+import time
 from typing import Union
 
 # See https://peps.python.org/pep-0249/#globals
@@ -24,36 +25,42 @@ threadsafety = 0
 paramstyle = 'qmark'
 
 
+def _make_value(constructor, *args):
+    try:
+        return constructor(*args)
+    except (TypeError, ValueError, OverflowError, OSError) as e:
+        raise DataError(str(e)) from e
+
+
 def Date(year, month, day):
-    return datetime.date(year, month, day)
+    return _make_value(datetime.date, year, month, day)
 
 
 def Time(hour, minute, second):
-    return datetime.time(hour, minute, second)
+    return _make_value(datetime.time, hour, minute, second)
 
 
 def Timestamp(year, month, day, hour, minute, second):
-    return datetime.datetime(year, month, day, hour, minute, second)
-
-
-# See PEP 249
-import time
+    return _make_value(datetime.datetime, year, month, day, hour, minute, second)
 
 
 def DateFromTicks(ticks):
-    return Date(*time.localtime(ticks)[:3])  # TODO: Really local time?
+    return Date(*_make_value(time.localtime, ticks)[:3])
 
 
 def TimeFromTicks(ticks):
-    return Time(*time.localtime(ticks)[3:6])
+    return Time(*_make_value(time.localtime, ticks)[3:6])
 
 
 def TimestampFromTicks(ticks):
-    return Timestamp(*time.localtime(ticks)[:6])
+    return Timestamp(*_make_value(time.localtime, ticks)[:6])
 
 
 def Binary(string):
-    return string.encode('UTF-8')
+    try:
+        return _make_value(string.encode, 'UTF-8')
+    except AttributeError as e:
+        raise DataError(str(e)) from e
 
 
 # Intentionally omitted, we always give type_code = None, like sqlite3
@@ -80,6 +87,6 @@ def connect(address: Union[tuple[str, int], str] = None, *, username: str = None
     if address is None and transport is None and username is None and password is None and len(kwargs) == 0:
         transport = 'unix'
     elif address is None or transport is None:
-        raise Error("Address and transport must be given")
+        raise InterfaceError("Address and transport must be given")
 
     return Connection(address, username, password, transport, kwargs)

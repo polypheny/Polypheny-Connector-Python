@@ -228,7 +228,7 @@ def test_serialize_varbinary(cur):
 def test_serialize_not_implemented(cur):
     cur.execute('DROP TABLE IF EXISTS t')
     cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a INTEGER, PRIMARY KEY(i))')
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(polypheny.NotSupportedError):
         cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', ({'a': 'b'},))
 
 def test_trailing_semicolon(cur):

@@ -18,7 +18,7 @@ from functools import reduce
 
 import polypheny.interval as interval
 from org.polypheny.prism import value_pb2
-from polypheny.exceptions import InterfaceError
+from polypheny.exceptions import DataError, InterfaceError, InternalError, NotSupportedError
 
 
 def serialize_big_decimal(v, value):
@@ -33,6 +33,13 @@ def serialize_big_decimal(v, value):
 
 # See ProtoValueDeserializer
 def py2proto(value, v=None):
+    try:
+        return _py2proto(value, v)
+    except (TypeError, ValueError, OverflowError, OSError, RecursionError) as e:
+        raise DataError(str(e)) from e
+
+
+def _py2proto(value, v):
     if v is None:
         v = value_pb2.ProtoValue()
     if type(value) is bool:
@@ -66,7 +73,7 @@ def py2proto(value, v=None):
         for element in value:
             v.list.values.append(py2proto(element))
     else:
-        raise NotImplementedError
+        raise NotSupportedError()
 
     return v
 
@@ -83,8 +90,14 @@ def parse_big_decimal(value):
 
 
 def proto2py(value):
+    try:
+        return _proto2py(value)
+    except (ValueError, OverflowError, OSError, RecursionError) as e:
+        raise InternalError(str(e)) from e
+
+
+def _proto2py(value):
     name = value.WhichOneof("value")
-    assert name is not None
     if name == "boolean":
         return value.boolean.boolean
     elif name == "integer":
@@ -132,7 +145,7 @@ def proto2py(value):
             "edges": [_proto_node_or_edge2py(edge) for edge in graph.edges],
         }
     else:
-        raise RuntimeError("Unhandled value type")
+        raise NotSupportedError("Unhandled value type")
 
 
 def _proto_node_or_edge2py(element):

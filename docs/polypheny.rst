@@ -51,7 +51,8 @@ Obtain a cursor from ``Connection.cursor()``. Each new execution releases the
 previous result on that cursor. ``execute()`` runs SQL. ``executeany()`` takes
 an explicit language and can select a default namespace for the statement.
 Use ``?`` with a list or tuple of parameters, or ``:name`` with a dictionary
-for named SQL parameters. Cypher execution uses the direct statement path.
+for named SQL parameters. For servers that support prepared Cypher, bind
+``$name`` with a dictionary.
 
 .. autoclass:: polypheny.Cursor()
 
@@ -89,13 +90,25 @@ at exhaustion.
 Exceptions
 ----------
 
-The connector exports ``Warning`` and ``Error``. Prism server errors use
-``Error``. The DB-API subclasses are ``InterfaceError`` and ``DatabaseError``.
-The latter has subclasses ``DataError``, ``OperationalError``,
-``IntegrityError``, ``InternalError``, ``ProgrammingError``, and
-``NotSupportedError``. Closed connection operations such as
-``cursor()``, ``commit()``, or ``rollback()`` raise ``ProgrammingError``.
-Socket failures can surface as ``OSError`` or ``EOFError``.
+The connector exports ``Warning`` and ``Error``. The DB-API subclasses are
+``InterfaceError`` and ``DatabaseError``. The latter has subclasses
+``DataError``, ``OperationalError``, ``IntegrityError``, ``InternalError``,
+``ProgrammingError``, and ``NotSupportedError``.
+
+Prism server errors use the SQLSTATE class to select the exception type.
+An unknown class or a response from a server without structured error
+details raises ``DatabaseError``. Every ``Error`` exposes ``sqlstate``
+and ``errorcode``, which are ``None`` when unavailable. ``str(error)``
+returns the original server message.
+
+Invalid cursor or connection use raises ``ProgrammingError``. A transport
+configuration or protocol mismatch raises ``InterfaceError``. A refused or
+lost connection raises ``OperationalError``. Unsupported result frames
+and value types raise ``NotSupportedError``.
+
+After transport loss, ``rollback()`` also raises ``OperationalError``.
+Handle that error if you attempt a rollback during cleanup, and use a new
+connection for subsequent operations.
 
 See the `official Python API reference <https://docs.polypheny.com/en/latest/drivers/python/api/polypheny>`_
 and `error handling guide <https://docs.polypheny.com/en/latest/drivers/python/error-handling>`_.

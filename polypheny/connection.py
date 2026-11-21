@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from contextlib import suppress
 from typing import List, Any
 
 from org.polypheny.prism import graph_frame_pb2, relational_frame_pb2, value_pb2
 from polypheny import rpc
-from polypheny.exceptions import *
+from polypheny.exceptions import Error, InterfaceError, NotSupportedError, ProgrammingError
 from polypheny.serialize import proto2py, proto_graph_element2py
 
 
@@ -25,22 +26,16 @@ class Connection:
         self.cursors = set()
         self.con = None  # Needed so destructor works
 
-        try:
-            self.con = rpc.Connection(address, transport, kwargs)
-        except ConnectionRefusedError:
-            raise Error("Connection refused") from None
-
+        self.con = rpc.Connection(address, transport, kwargs)
         try:
             resp = self.con.connect(username, password, False)
             if not resp.is_compatible:
-                raise Error(
+                raise InterfaceError(
                     f"Client ({rpc.POLYPHENY_API_MAJOR}.{rpc.POLYPHENY_API_MINOR}) is incompatible with Server version ({resp.major_api_version}.{resp.minor_api_version})")
-        except Exception as e:
-            # This manual dance prevents the disconnect message from being sent
-            self.con.con.close()
-            self.con.con = None
+        except Error:
+            self.con.abort()
             self.con = None
-            raise Error(str(e))
+            raise
 
     def cursor(self):
         if self.con is None:
@@ -83,20 +78,19 @@ class Connection:
         self.con.rollback()
 
     def __del__(self):
-        # TODO Thread-safety?
-        self.close()
+        with suppress(Error):
+            self.close()
 
     def close(self):
         if self.con is None:
-            assert len(self.cursors) == 0
             return
 
-        for cur in list(self.cursors):  # self.cursors is materialized because cur.close modifies it
-            cur.close()
-        assert len(self.cursors) == 0
-
         try:
-            self.rollback()
+            for cur in list(self.cursors):
+                with suppress(Error):
+                    cur.close()
+            if self.con.con is not None:
+                self.rollback()
         finally:
             self.con.close()
             self.con = None
@@ -120,20 +114,15 @@ class ResultCursor:
     def _frame_items(self, frame):
         result_type = frame.WhichOneof('result')
         if result_type not in self._FRAME_ITEMS:
-            self.close()
-            raise InterfaceError(f'Unsupported Prism result frame: {result_type}')
+            raise NotSupportedError(f'Unsupported Prism result frame: {result_type}')
         return iter(getattr(getattr(frame, result_type), self._FRAME_ITEMS[result_type]))
-
-    def __del__(self):
-        assert self.closed
-        self.close()
 
     def close(self):
         if self.closed:
             return
-        assert self.con.con is not None
         try:
-            self.con.con.close_statement(self.statement_id)
+            if self.con.con is not None:
+                self.con.con.close_statement(self.statement_id)
         finally:
             self.con = None
             self.closed = True
@@ -141,9 +130,7 @@ class ResultCursor:
     def __next__(self):
         # frame is None when there were no results
         if self.frame is None:
-            raise Error("Previous statement did not produce any results")
-
-        assert self.rows is not None
+            raise ProgrammingError("Previous statement did not produce any results")
 
         while True:
             try:
@@ -162,28 +149,41 @@ class Cursor:
         self.reset()
 
     def reset(self):
-        if self.result is not None:
-            self.result.close()
+        self._require_open()
+        previous, self.result = self.result, None
         self.description = None
         self.rowcount = -1
         self.arraysize = 1
-        self.result = None
+        if previous is not None:
+            previous.close()
 
     # def callproc(self):
     # optional
 
     def __del__(self):
-        self.close()
+        with suppress(Error):
+            self.close()
 
     def close(self):
-        # TODO: Error when already closed?
-        assert self.con is not None or self.result is None
         if self.con is not None:
-            if self.result is not None:
-                self.result.close()
+            try:
+                if self.result is not None:
+                    self.result.close()
+            finally:
                 self.result = None
-            self.con.cursors.remove(self)
-            self.con = None
+                self.con.cursors.discard(self)
+                self.con = None
+
+    def _require_open(self):
+        if self.con is None:
+            raise ProgrammingError("Cursor is closed")
+
+    def _require_result(self):
+        self._require_open()
+        if self.result is None:
+            raise ProgrammingError("No statement was yet executed")
+        if self.result.frame is None:
+            raise ProgrammingError("Previous statement did not produce any results")
 
     def __iter__(self):
         return self
@@ -210,8 +210,12 @@ class Cursor:
         """
         Execute `query` once with each item in `params` as parameters.
         """
-        # TODO: Optimize, this is to exercise the execute code more
-        for param in params:
+        self._require_open()
+        try:
+            batch = iter(params)
+        except TypeError as e:
+            raise ProgrammingError(str(e)) from e
+        for param in batch:
             self.execute(query, param)
 
     def executeany(self, lang: str, query: str, params: List[Any] = None, *,
@@ -237,46 +241,44 @@ class Cursor:
         as relational rows can contain graph values alongside scalar values.
         """
 
-        if self.con is None:
-            raise Error("Cursor is closed")
-
         self.reset()
+        statement_id = None
+        connection = self.con.con
+        try:
+            if params is None:  # Unparameterized query
+                response = connection.execute_unparameterized_statement(lang, query, fetch_size, namespace)
+                statement_id = response.statement_id
+                if not response.HasField("result"):
+                    raise InterfaceError("Prism statement response did not contain a result")
+                result = response.result
+            elif type(params) in (list, tuple):
+                response = connection.prepare_indexed_statement(lang, query, namespace)
+                statement_id = response.statement_id
+                result = connection.execute_indexed_statement(statement_id, params, fetch_size)
+            elif type(params) is dict:
+                response = connection.prepare_named_statement(lang, query, namespace)
+                statement_id = response.statement_id
+                result = connection.execute_named_statement(statement_id, params, fetch_size)
+            else:
+                raise ProgrammingError("Unexpected type for params " + str(type(params)))
 
-        if params is None:  # Unparameterized query
-            r = self.con.con.execute_unparameterized_statement(lang, query, fetch_size, namespace)
-            assert r.HasField("result")  # Is this always true?
-            statement_id = r.statement_id
-            result = r.result
-        elif type(params) == list or type(params) == tuple:
-            resp = self.con.con.prepare_indexed_statement(lang, query, namespace)
-            statement_id = resp.statement_id
-            result = self.con.con.execute_indexed_statement(statement_id, params, fetch_size)
-        elif type(params) == dict:
-            resp = self.con.con.prepare_named_statement(lang, query, namespace)
-            statement_id = resp.statement_id
-            result = self.con.con.execute_named_statement(statement_id, params, fetch_size)
-        else:
-            raise Error("Unexpected type for params " + str(type(params)))
+            frame = result.frame if result.HasField("frame") else None
+            self.result = ResultCursor(self.con, statement_id, frame, fetch_size)
+        except (Error, TypeError, ValueError, OverflowError) as e:
+            if statement_id is not None:
+                with suppress(Error):
+                    connection.close_statement(statement_id)
+            if isinstance(e, Error):
+                raise
+            raise ProgrammingError(str(e)) from e
 
-        if result.HasField(
-                "frame"):  # TODO Better Error when one of the fetch* methods is invoked.  Empty fake result?
-            self.rowcount = -1
-            if result.frame.WhichOneof('result') == 'relational_frame':
-                self.derive_description(result.frame.relational_frame)
-            frame = result.frame
-        else:
+        if frame is None:
             self.rowcount = result.scalar
-            frame = None
-
-        self.result = ResultCursor(self.con, statement_id, frame, fetch_size)
+        elif frame.WhichOneof('result') == 'relational_frame':
+            self.derive_description(frame.relational_frame)
 
     def fetchone(self):
-        if self.con is None:
-            raise ProgrammingError("Cursor is closed")
-
-        if self.result is None:
-            raise ProgrammingError("No statement was yet executed")
-
+        self._require_result()
         try:
             n = next(self.result)
         except StopIteration:
@@ -294,14 +296,18 @@ class Cursor:
         elif isinstance(n, graph_frame_pb2.GraphElement):
             return proto_graph_element2py(n)
         else:
-            raise Error(f"Unknown result of type {type(n)}")
+            raise NotSupportedError(f"Unknown result of type {type(n)}")
 
     def fetchmany(self, size=None):
-        # TODO: Optimize, this is to exercise the fetch code more
+        self._require_result()
         if size is None:
             size = self.arraysize
+        try:
+            batch = range(size)
+        except (TypeError, ValueError, OverflowError) as e:
+            raise ProgrammingError(str(e)) from e
         results = []
-        for _ in range(size):
+        for _ in batch:
             row = self.fetchone()
             if row is None:
                 break

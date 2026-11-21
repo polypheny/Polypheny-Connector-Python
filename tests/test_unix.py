@@ -28,9 +28,10 @@ def unix_connect(args):
 
 def test_connect_unix():
     if sys.platform == 'win32':  # TODO: Once this works the documentation needs to be updated
-        with pytest.raises(AttributeError):
+        unavailable = (polypheny.InterfaceError, polypheny.OperationalError)
+        with pytest.raises(unavailable):
             unix_connect(False)
-        with pytest.raises(AttributeError):
+        with pytest.raises(unavailable):
             unix_connect(True)
     else:
         unix_connect(True)

@@ -5,8 +5,7 @@ from setuptools import setup, find_packages
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 CONNECTOR_SRC_DIR = os.path.join(THIS_DIR, "polypheny")
 
-VERSION = (0, 0, 0, None)  # Default
-VERSION = "v0.0.0" # Default
+VERSION = "v2.2.0"
 
 
 version_file = 'polypheny-connector-version.txt'
@@ -77,6 +76,6 @@ setup(
     },
     python_requires=">=3.9",
     install_requires=[
-        "polypheny-prism-api==2.3",
+        "polypheny-prism-api==2.4",
     ],
 )
