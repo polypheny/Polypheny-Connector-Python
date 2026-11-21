@@ -27,9 +27,8 @@ environment.
 
    python -m pip install polypheny
 
-This documentation is built from the connector source. Graph examples need a
-build with graph support. Until a release includes that support, install the
-current development build as described in :doc:`graph`.
+The Cypher examples require a connector with Prism 2.3 graph support.
+See :doc:`graph` for installation from source and the server requirements.
 
 Enable the Prism query interface on the server. The connector uses the server's
 compatibility response during the Prism handshake. Mixed graph and scalar

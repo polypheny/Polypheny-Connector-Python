@@ -7,13 +7,13 @@ Pass one Cypher statement per call and omit ``params``. The server supports
 direct execution for Cypher. Commit writes with ``connection.commit()``.
 A scalar write acknowledgement is available through ``cursor.rowcount``.
 
-The examples match the development connector in pull request #3. Install it
-with Python 3.9 or later. The package uses the released Prism 2.3 bindings.
-Mixed projections require a Prism 2.3 server.
+Use Python 3.9 or later and a connector with Prism 2.3 graph support.
+Mixed projections require a Prism 2.3 server. To install the connector
+from source, run the following command in a virtual environment.
 
 .. code-block:: bash
 
-   python -m pip install "polypheny @ git+https://github.com/polypheny/Polypheny-Connector-Python.git@refs/pull/3/head"
+   python -m pip install "polypheny @ git+https://github.com/polypheny/Polypheny-Connector-Python.git@master"
 
 Result formats
 --------------
@@ -100,6 +100,6 @@ tabular formats.
    ['route', 'destination']
    ['Ada', 'Lin'] Lin
 
-See the `official graph reference preview <https://docs-preview.polypheny.com/en/latest/drivers/python/graph-results>`_
-and the `Cypher integration example <https://docs-preview.polypheny.com/en/latest/integration/python#query-a-graph-with-cypher>`_
-for more projections and result shapes.
+The official documentation covers more projections and result shapes.
+`Graph reference <https://docs.polypheny.com/en/latest/drivers/python/graph-results>`_
+· `Cypher integration example <https://docs.polypheny.com/en/latest/integration/python#query-a-graph-with-cypher>`_
