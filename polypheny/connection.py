@@ -138,8 +138,9 @@ class ResultCursor:
             except StopIteration:
                 if self.frame.is_last:
                     raise
-            self.frame = self.con.con.fetch(self.statement_id, self.fetch_size)
-            self.rows = self._frame_items(self.frame)
+            frame = self.con.con.fetch(self.statement_id, self.fetch_size)
+            self.rows = self._frame_items(frame)
+            self.frame = frame
 
 
 class Cursor:
@@ -283,6 +284,10 @@ class Cursor:
             n = next(self.result)
         except StopIteration:
             return None
+        except Error:
+            with suppress(Error):
+                self.reset()
+            raise
 
         if isinstance(n, relational_frame_pb2.Row):
             v = []

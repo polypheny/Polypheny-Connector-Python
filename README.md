@@ -29,7 +29,8 @@ The connector uses the Prism 2.4 client definitions and connects to servers
 that report a compatible Prism 2.x API. The minor versions do not have to match.
 Document collection metadata requires server-side support introduced in Prism 2.2.
 PEP 249 error classification uses SQLSTATE details from Prism 2.4 servers.
-Errors from older servers raise `DatabaseError` with `sqlstate=None`.
+Errors from older servers raise `DatabaseError` with `sqlstate=None` and
+`errorcode=None`.
 
 
 ## Getting Started

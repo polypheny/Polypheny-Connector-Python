@@ -100,6 +100,182 @@ def test_prism_error_without_vendor_code():
 
 
 @pytest.fixture
+def wire(monkeypatch):
+    transport = Mock()
+    monkeypatch.setattr(rpc, "PlainTransport", Mock(return_value=transport))
+    return transport
+
+
+def reply(request_id, field):
+    response = protointerface_pb2.Response(id=request_id, last=True)
+    getattr(response, field).SetInParent()
+    return response
+
+
+def login_reply():
+    response = reply(1, "connection_response")
+    response.connection_response.is_compatible = True
+    return response
+
+
+def error_reply(request_id, message, sqlstate):
+    response = reply(request_id, "error_response")
+    response.error_response.message = message
+    if sqlstate is not None:
+        response.error_response.details.state = sqlstate
+        response.error_response.details.error_code = 0
+    return response
+
+
+def statement_replies(request_id, statement_id, *, last=False):
+    started = protointerface_pb2.Response(id=request_id)
+    started.statement_response.statement_id = statement_id
+    completed = reply(request_id, "statement_response")
+    completed.statement_response.statement_id = statement_id
+    frame = completed.statement_response.result.frame
+    frame.is_last = last
+    frame.relational_frame.SetInParent()
+    if last:
+        frame.relational_frame.rows.add().values.append(py2proto(1))
+    return started, completed
+
+
+def send_replies(wire, *responses):
+    wire.recv_msg.side_effect = [response.SerializeToString() for response in responses]
+
+
+def requests_sent(wire):
+    return [
+        protointerface_pb2.Request.FromString(call.args[0])
+        for call in wire.send_msg.call_args_list
+    ]
+
+
+@pytest.mark.parametrize(("sqlstate", "exception_type"), [
+    ("28P01", polypheny.OperationalError),
+    (None, polypheny.DatabaseError),
+])
+def test_login_preserves_prism_error(wire, sqlstate, exception_type):
+    message = "Login rejected.\n"
+    send_replies(wire, error_reply(1, message, sqlstate))
+
+    with pytest.raises(exception_type) as caught:
+        polypheny.connect(("localhost", 20590), username="guest", transport="plain")
+
+    error = caught.value
+    assert type(error) is exception_type
+    assert error.args == (message,)
+    assert error.sqlstate == sqlstate
+    assert error.errorcode == (0 if sqlstate is not None else None)
+    assert [request.WhichOneof("type") for request in requests_sent(wire)] == ["connection_request"]
+    wire.close.assert_called_once_with()
+
+
+@pytest.mark.parametrize(("query", "params", "mode"), [
+    ("INSERT INTO t VALUES (?)", (1,), "indexed"),
+    ("INSERT INTO t VALUES (:id)", {"id": 1}, "named"),
+])
+def test_prepared_error_survives_statement_cleanup(wire, query, params, mode):
+    signature = reply(2, "prepared_statement_signature")
+    signature.prepared_statement_signature.statement_id = 42
+    message = "Primary key conflict.\n"
+    send_replies(
+        wire,
+        login_reply(),
+        signature,
+        error_reply(3, message, "23505"),
+        error_reply(4, "Cleanup failed", "XX000"),
+        reply(5, "rollback_response"),
+        reply(6, "disconnect_response"),
+    )
+
+    connection = polypheny.connect(("localhost", 20590), transport="plain")
+    try:
+        cursor = connection.cursor()
+        with pytest.raises(polypheny.IntegrityError) as caught:
+            cursor.execute(query, params)
+        assert caught.value.args == (message,)
+        assert caught.value.sqlstate == "23505"
+        assert caught.value.errorcode == 0
+        with pytest.raises(polypheny.ProgrammingError, match="No statement was yet executed"):
+            cursor.fetchone()
+    finally:
+        connection.close()
+
+    requests = requests_sent(wire)
+    assert [request.WhichOneof("type") for request in requests] == [
+        "connection_request",
+        f"prepare_{mode}_statement_request",
+        f"execute_{mode}_statement_request",
+        "close_statement_request",
+        "rollback_request",
+        "disconnect_request",
+    ]
+    assert requests[3].close_statement_request.statement_id == 42
+
+
+@pytest.mark.parametrize("unsupported_frame", [False, True], ids=["server-error", "unsupported-frame"])
+def test_fetch_failure_releases_result_and_cursor_can_recover(wire, unsupported_frame):
+    message = "Division by zero.\n"
+    if unsupported_frame:
+        continuation = reply(3, "frame")
+        continuation.frame.is_last = True
+        exception_type = polypheny.NotSupportedError
+    else:
+        continuation = error_reply(3, message, "22012")
+        exception_type = polypheny.DataError
+
+    send_replies(
+        wire,
+        login_reply(),
+        *statement_replies(2, 42),
+        continuation,
+        reply(4, "close_statement_response"),
+        reply(5, "rollback_response"),
+        *statement_replies(6, 43, last=True),
+        reply(7, "close_statement_response"),
+        reply(8, "rollback_response"),
+        reply(9, "disconnect_response"),
+    )
+
+    connection = polypheny.connect(("localhost", 20590), transport="plain")
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        with pytest.raises(exception_type) as caught:
+            cursor.fetchone()
+        if not unsupported_frame:
+            assert caught.value.args == (message,)
+            assert caught.value.sqlstate == "22012"
+            assert caught.value.errorcode == 0
+        with pytest.raises(polypheny.ProgrammingError, match="No statement was yet executed"):
+            cursor.fetchone()
+        connection.rollback()
+        cursor.execute("SELECT 1")
+        assert cursor.fetchall() == [[1]]
+    finally:
+        connection.close()
+
+    requests = requests_sent(wire)
+    assert requests[2].fetch_request.statement_id == 42
+    assert requests[3].close_statement_request.statement_id == 42
+    assert requests[6].close_statement_request.statement_id == 43
+
+
+def test_vendor_code_without_sqlstate(wire):
+    response = error_reply(1, "Login rejected.", None)
+    response.error_response.details.error_code = 0
+    send_replies(wire, response)
+
+    with pytest.raises(polypheny.DatabaseError) as caught:
+        polypheny.connect(("localhost", 20590), transport="plain")
+
+    assert type(caught.value) is polypheny.DatabaseError
+    assert caught.value.sqlstate is None
+    assert caught.value.errorcode == 0
+
+
+@pytest.fixture
 def connection(monkeypatch):
     prism = Mock()
     prism.connect.return_value = SimpleNamespace(is_compatible=True)

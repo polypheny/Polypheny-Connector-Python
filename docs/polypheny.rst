@@ -98,8 +98,27 @@ The connector exports ``Warning`` and ``Error``. The DB-API subclasses are
 Prism server errors use the SQLSTATE class to select the exception type.
 An unknown class or a response from a server without structured error
 details raises ``DatabaseError``. Every ``Error`` exposes ``sqlstate``
-and ``errorcode``, which are ``None`` when unavailable. ``str(error)``
+and ``errorcode``. Each attribute is ``None`` when unavailable, and an
+explicit vendor code of zero is returned as ``0``. ``str(error)``
 returns the original server message.
+
+.. list-table::
+   :header-rows: 1
+
+   * - SQLSTATE classes
+     - Exception
+   * - ``08``, ``28``, ``40``, ``53``, ``57``, ``58``
+     - ``OperationalError``
+   * - ``0A``
+     - ``NotSupportedError``
+   * - ``22``
+     - ``DataError``
+   * - ``23``
+     - ``IntegrityError``
+   * - ``24``, ``25``, ``26``, ``2D``, ``I9``, ``XX``
+     - ``InternalError``
+   * - ``3F``, ``42``
+     - ``ProgrammingError``
 
 Invalid cursor or connection use raises ``ProgrammingError``. A transport
 configuration or protocol mismatch raises ``InterfaceError``. A refused or

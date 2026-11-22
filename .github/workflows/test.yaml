@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: polypheny/Polypheny-DB
-          ref: ${{ vars.POLYPHENY_DB_REF || '18586fb885329cd3b0d61d7af7696a44328c34b1' }}
+          ref: ${{ vars.POLYPHENY_DB_REF || '01a2e438d761190e889f1a9f91426d3264b3e6d8' }}
 
       - uses: actions/setup-java@v4
         with:
