@@ -214,16 +214,23 @@ def test_prepared_error_survives_statement_cleanup(wire, query, params, mode):
     assert requests[3].close_statement_request.statement_id == 42
 
 
-@pytest.mark.parametrize("unsupported_frame", [False, True], ids=["server-error", "unsupported-frame"])
-def test_fetch_failure_releases_result_and_cursor_can_recover(wire, unsupported_frame):
-    message = "Division by zero.\n"
-    if unsupported_frame:
+@pytest.mark.parametrize("failure", ["server-error", "unsupported-frame", "unsupported-value"])
+def test_fetch_failure_releases_result_and_cursor_can_recover(wire, failure):
+    if failure == "server-error":
+        message = "Division by zero.\n"
+        continuation = error_reply(3, message, "22012")
+        exception_type = polypheny.DataError
+    else:
         continuation = reply(3, "frame")
         continuation.frame.is_last = True
         exception_type = polypheny.NotSupportedError
-    else:
-        continuation = error_reply(3, message, "22012")
-        exception_type = polypheny.DataError
+        if failure == "unsupported-value":
+            rows = continuation.frame.relational_frame.rows
+            rows.add().values.add(file=value_pb2.ProtoFile())
+            rows.add().values.append(py2proto(7))
+            message = "Unhandled value type"
+        else:
+            message = "Unsupported Prism result frame: None"
 
     send_replies(
         wire,
@@ -244,13 +251,17 @@ def test_fetch_failure_releases_result_and_cursor_can_recover(wire, unsupported_
         cursor.execute("SELECT 1")
         with pytest.raises(exception_type) as caught:
             cursor.fetchone()
-        if not unsupported_frame:
-            assert caught.value.args == (message,)
+        assert type(caught.value) is exception_type
+        assert caught.value.args == (message,)
+        if failure == "server-error":
             assert caught.value.sqlstate == "22012"
             assert caught.value.errorcode == 0
+        cleanup = requests_sent(wire)[-1]
+        assert cleanup.WhichOneof("type") == "close_statement_request"
+        assert cleanup.close_statement_request.statement_id == 42
+        connection.rollback()
         with pytest.raises(polypheny.ProgrammingError, match="No statement was yet executed"):
             cursor.fetchone()
-        connection.rollback()
         cursor.execute("SELECT 1")
         assert cursor.fetchall() == [[1]]
     finally:
@@ -258,7 +269,7 @@ def test_fetch_failure_releases_result_and_cursor_can_recover(wire, unsupported_
 
     requests = requests_sent(wire)
     assert requests[2].fetch_request.statement_id == 42
-    assert requests[3].close_statement_request.statement_id == 42
+    assert requests[4].WhichOneof("type") == "rollback_request"
     assert requests[6].close_statement_request.statement_id == 43
 
 

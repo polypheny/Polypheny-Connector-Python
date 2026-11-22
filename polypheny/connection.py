@@ -282,26 +282,21 @@ class Cursor:
         self._require_result()
         try:
             n = next(self.result)
+            if isinstance(n, relational_frame_pb2.Row):
+                return [proto2py(value) for value in n.values]
+            if isinstance(n, value_pb2.ProtoDocument):
+                value = value_pb2.ProtoValue()
+                value.document.CopyFrom(n)
+                return proto2py(value)
+            if isinstance(n, graph_frame_pb2.GraphElement):
+                return proto_graph_element2py(n)
+            raise NotSupportedError(f"Unknown result of type {type(n)}")
         except StopIteration:
             return None
         except Error:
             with suppress(Error):
                 self.reset()
             raise
-
-        if isinstance(n, relational_frame_pb2.Row):
-            v = []
-            for value in n.values:
-                v.append(proto2py(value))
-            return v
-        elif isinstance(n, value_pb2.ProtoDocument):
-            value = value_pb2.ProtoValue()
-            value.document.CopyFrom(n)
-            return proto2py(value)
-        elif isinstance(n, graph_frame_pb2.GraphElement):
-            return proto_graph_element2py(n)
-        else:
-            raise NotSupportedError(f"Unknown result of type {type(n)}")
 
     def fetchmany(self, size=None):
         self._require_result()
