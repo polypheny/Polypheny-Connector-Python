@@ -231,15 +231,22 @@ class Connection:
         self.send_msg(msg)
         started = self.recv_msg(msg.id)
         self._require_response(started, 'statement_response', last=False)
+        statement_id = started.statement_response.statement_id
         try:
             completed = self.recv_msg(msg.id)
         except Error:
             # Prism allocated a statement before evaluating the query.
             with suppress(Error):
-                self.close_statement(started.statement_response.statement_id)
+                self.close_statement(statement_id)
             raise
         self._require_response(completed, 'statement_response')
-        return completed.statement_response
+        result = completed.statement_response
+        if result.statement_id != statement_id:
+            self.abort()
+            raise InterfaceError(
+                f"Unexpected Prism statement ID {result.statement_id}, expected {statement_id}"
+            )
+        return result
 
     def prepare_indexed_statement(self, language_name, statement, namespace):
         msg = self.new_request()

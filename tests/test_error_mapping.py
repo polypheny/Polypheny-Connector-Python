@@ -13,8 +13,10 @@
 # limitations under the License.
 
 
+import json
 import os
 from contextlib import contextmanager
+from urllib.request import Request, urlopen
 
 import pytest
 
@@ -72,12 +74,22 @@ def test_sql_statement_error(con, errtest, statement, exception_type, sqlstates)
 
 @contextmanager
 def enable_constraint_enforcement(connection, cursor, key):
-    cursor.execute(f"ALTER CONFIG 'runtime/{key}' SET true")
+    key = f"runtime/{key}"
+    webui_url = os.environ.get("POLYPHENY_TEST_WEBUI_URL", "http://127.0.0.1:7659")
+    request = Request(f"{webui_url.rstrip('/')}/config/v1/getConfig", data=key.encode(),
+                      headers={"Content-Type": "text/plain"})
+    with urlopen(request, timeout=10) as response:
+        enabled = json.load(response)["value"]
+    assert isinstance(enabled, bool), f"Expected a boolean runtime setting for {key}"
+
+    if not enabled:
+        cursor.execute(f"ALTER CONFIG '{key}' SET true")
     try:
         yield
     finally:
         connection.rollback()
-        cursor.execute(f"ALTER CONFIG 'runtime/{key}' SET false")
+        if not enabled:
+            cursor.execute(f"ALTER CONFIG '{key}' SET false")
 
 
 def test_s10_duplicate_primary_key_enforced(con, errtest):

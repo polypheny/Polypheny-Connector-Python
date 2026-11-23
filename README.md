@@ -85,10 +85,14 @@ con.close()
 An in-depth and more detailed documentation can be found [here](https://docs.polypheny.com/en/latest/drivers/python/overview).
 
 ## Tests
-Run the tests with coverage report:
+Run the tests with a coverage report against an isolated Polypheny instance.
 ```
 coverage run --source polypheny -m pytest && coverage report -m
 ```
+
+The constraint tests read the test server's runtime settings through its Web UI
+at `http://127.0.0.1:7659`. Set `POLYPHENY_TEST_WEBUI_URL` if the same test server
+exposes its Web UI at a different address.
 
 ## Roadmap
 See the [open issues](https://github.com/polypheny/Polypheny-DB/labels/A-python) for a list of proposed features (and known issues).

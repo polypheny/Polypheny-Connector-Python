@@ -86,6 +86,14 @@ def test_exception_constructible_with_message():
     assert error.errorcode is None
 
 
+def test_connection_module_preserves_exception_aliases():
+    for name in (
+        "DataError", "DatabaseError", "Error", "IntegrityError", "InterfaceError",
+        "InternalError", "NotSupportedError", "OperationalError", "ProgrammingError", "Warning",
+    ):
+        assert getattr(polypheny.connection, name) is getattr(polypheny, name)
+
+
 def test_prism_error_without_vendor_code():
     response = protointerface_pb2.Response(id=1, last=True)
     response.error_response.details.state = "23502"
@@ -149,6 +157,38 @@ def requests_sent(wire):
         protointerface_pb2.Request.FromString(call.args[0])
         for call in wire.send_msg.call_args_list
     ]
+
+
+def test_mismatched_statement_id_aborts_connection(wire):
+    started, completed = statement_replies(2, 42, last=True)
+    completed.statement_response.statement_id = 43
+    send_replies(
+        wire,
+        login_reply(),
+        started,
+        completed,
+        reply(3, "close_statement_response"),
+        reply(4, "rollback_response"),
+        reply(5, "disconnect_response"),
+    )
+
+    connection = polypheny.connect(("localhost", 20590), transport="plain")
+    try:
+        cursor = connection.cursor()
+        with pytest.raises(polypheny.InterfaceError, match="Unexpected Prism statement ID 43, expected 42"):
+            cursor.execute("SELECT 1")
+        with pytest.raises(polypheny.ProgrammingError, match="No statement was yet executed"):
+            cursor.fetchone()
+        with pytest.raises(polypheny.OperationalError):
+            connection.rollback()
+    finally:
+        connection.close()
+
+    assert [request.WhichOneof("type") for request in requests_sent(wire)] == [
+        "connection_request",
+        "execute_unparameterized_statement_request",
+    ]
+    wire.close.assert_called_once_with()
 
 
 @pytest.mark.parametrize(("sqlstate", "exception_type"), [

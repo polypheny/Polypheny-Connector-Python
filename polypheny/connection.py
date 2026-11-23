@@ -17,7 +17,19 @@ from typing import List, Any
 
 from org.polypheny.prism import graph_frame_pb2, relational_frame_pb2, value_pb2
 from polypheny import rpc
-from polypheny.exceptions import Error, InterfaceError, NotSupportedError, ProgrammingError
+# Preserve the exception names exposed by this module in previous releases.
+from polypheny.exceptions import (
+    DataError as DataError,
+    DatabaseError as DatabaseError,
+    Error as Error,
+    IntegrityError as IntegrityError,
+    InterfaceError as InterfaceError,
+    InternalError as InternalError,
+    NotSupportedError as NotSupportedError,
+    OperationalError as OperationalError,
+    ProgrammingError as ProgrammingError,
+    Warning as Warning,
+)
 from polypheny.serialize import proto2py, proto_graph_element2py
 
 
