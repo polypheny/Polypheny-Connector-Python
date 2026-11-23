@@ -25,9 +25,12 @@ cd /path/to/polyphney-connector-python-x.y.z/
 python setup.py install
 ```
 
-The connector uses the Prism 2.2 client definitions and connects to servers
+The connector uses the Prism 2.4 client definitions and connects to servers
 that report a compatible Prism 2.x API. The minor versions do not have to match.
 Document collection metadata requires server-side support introduced in Prism 2.2.
+PEP 249 error classification uses SQLSTATE details from Prism 2.4 servers.
+Errors from older servers raise `DatabaseError` with `sqlstate=None` and
+`errorcode=None`.
 
 
 ## Getting Started
@@ -82,10 +85,14 @@ con.close()
 An in-depth and more detailed documentation can be found [here](https://docs.polypheny.com/en/latest/drivers/python/overview).
 
 ## Tests
-Run the tests with coverage report:
+Run the tests with a coverage report against an isolated Polypheny instance.
 ```
 coverage run --source polypheny -m pytest && coverage report -m
 ```
+
+The constraint tests read the test server's runtime settings through its Web UI
+at `http://127.0.0.1:7659`. Set `POLYPHENY_TEST_WEBUI_URL` if the same test server
+exposes its Web UI at a different address.
 
 ## Roadmap
 See the [open issues](https://github.com/polypheny/Polypheny-DB/labels/A-python) for a list of proposed features (and known issues).

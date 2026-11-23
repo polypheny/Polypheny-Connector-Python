@@ -18,7 +18,7 @@ import pytest
 from org.polypheny.prism import graph_frame_pb2, protointerface_pb2, statement_responses_pb2, value_pb2
 
 from polypheny.connection import ResultCursor
-from polypheny.exceptions import Error, InterfaceError
+from polypheny.exceptions import Error, InterfaceError, OperationalError
 from polypheny.rpc import Connection, PlainTransport
 from polypheny.serialize import proto2py, proto_graph_element2py, py2proto
 
@@ -113,12 +113,12 @@ def test_fragmented_graph_message_is_read_in_full():
     assert statement_responses_pb2.Frame.FromString(transport.recv_msg()) == response
 
 
-def test_truncated_message_raises_eof():
+def test_truncated_message_raises_operational_error():
     transport = PlainTransport.__new__(PlainTransport)
     transport.con = Mock()
     transport.con.recv.side_effect = [(3).to_bytes(8, "little"), b"x", b""]
 
-    with pytest.raises(EOFError):
+    with pytest.raises(OperationalError):
         transport.recv_msg()
 
 

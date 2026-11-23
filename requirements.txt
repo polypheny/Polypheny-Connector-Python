@@ -1,4 +1,4 @@
-polypheny-prism-api==2.3
+polypheny-prism-api==2.4
 pytest
 coverage
 Sphinx

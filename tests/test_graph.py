@@ -260,13 +260,23 @@ def test_rejects_multiple_cypher_statements_and_recovers(graph):
     assert len(cur.fetchall()) == 3
 
 
-@pytest.mark.parametrize("params", [[], {"name": "Alice"}])
-def test_reports_server_limit_on_prepared_cypher(graph, params):
-    _, cur, namespace = graph
-    with pytest.raises(polypheny.Error, match="Prepared Cypher statements are not supported by Prism"):
-        cur.executeany("cypher", "MATCH (n:Person) RETURN n", params, namespace=namespace)
+def test_reports_server_limit_on_indexed_cypher(graph):
+    con, cur, namespace = graph
+    with pytest.raises(polypheny.NotSupportedError, match="Indexed prepared Cypher statements are not supported") as caught:
+        cur.executeany("cypher", "MATCH (n:Person) RETURN n", [], namespace=namespace)
+    assert caught.value.sqlstate == "0A000"
+    con.rollback()
     cur.executeany("cypher", "MATCH (n:Person) RETURN n.name AS name ORDER BY name", namespace=namespace)
     assert cur.fetchall() == [[name] for name in PEOPLE]
+
+
+def test_prepared_named_cypher(graph):
+    _, cur, namespace = graph
+    cur.executeany(
+        "cypher", "MATCH (n:Person) WHERE n.name = $name RETURN n.name AS name",
+        {"name": "Alice"}, namespace=namespace,
+    )
+    assert cur.fetchall() == [["Alice"]]
 
 
 def test_graph_namespace_metadata(graph):
