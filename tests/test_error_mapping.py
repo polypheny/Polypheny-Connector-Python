@@ -14,6 +14,7 @@
 
 
 import json
+import logging
 import os
 from contextlib import contextmanager
 from urllib.request import Request, urlopen
@@ -72,24 +73,43 @@ def test_sql_statement_error(con, errtest, statement, exception_type, sqlstates)
     assert_recovered(con, errtest)
 
 
+def _config_request(webui_url, endpoint, data, content_type):
+    request = Request(f"{webui_url}/config/v1/{endpoint}", data=data.encode(),
+                      headers={"Content-Type": content_type})
+    with urlopen(request, timeout=10) as response:
+        return json.load(response)
+
+
 @contextmanager
 def enable_constraint_enforcement(connection, cursor, key):
     key = f"runtime/{key}"
-    webui_url = os.environ.get("POLYPHENY_TEST_WEBUI_URL", "http://127.0.0.1:7659")
-    request = Request(f"{webui_url.rstrip('/')}/config/v1/getConfig", data=key.encode(),
-                      headers={"Content-Type": "text/plain"})
-    with urlopen(request, timeout=10) as response:
-        enabled = json.load(response)["value"]
+    webui_url = os.environ.get("POLYPHENY_TEST_WEBUI_URL", "http://127.0.0.1:7659").rstrip("/")
+    enabled = _config_request(webui_url, "getConfig", key, "text/plain")["value"]
     assert isinstance(enabled, bool), f"Expected a boolean runtime setting for {key}"
 
-    if not enabled:
-        cursor.execute(f"ALTER CONFIG '{key}' SET true")
+    def cleanup():
+        try:
+            connection.rollback()
+        finally:
+            if not enabled:
+                # The config server can restore the setting even if Prism has disconnected.
+                feedback = _config_request(webui_url, "updateConfigs", json.dumps({key: enabled}),
+                                           "application/json")
+                if feedback.get("successful") is not True:
+                    raise RuntimeError(f"Could not restore {key}: {feedback}")
+
     try:
-        yield
-    finally:
-        connection.rollback()
         if not enabled:
-            cursor.execute(f"ALTER CONFIG '{key}' SET false")
+            cursor.execute(f"ALTER CONFIG '{key}' SET true")
+        yield
+    except BaseException:
+        try:
+            cleanup()
+        except Exception:
+            logging.getLogger(__name__).exception("Cleanup failed for %s", key)
+        raise
+    else:
+        cleanup()
 
 
 def test_s10_duplicate_primary_key_enforced(con, errtest):
