@@ -70,8 +70,15 @@ def _py2proto(value, v):
     elif value is None:
         v.null.CopyFrom(value_pb2.ProtoNull())
     elif type(value) is list:
+        v.list.SetInParent()
         for element in value:
             v.list.values.append(py2proto(element))
+    elif type(value) is dict:
+        v.document.SetInParent()
+        for key, element in value.items():
+            if not isinstance(key, str):
+                raise NotSupportedError("Document keys must be strings")
+            py2proto(element, v.document.entries[key])
     else:
         raise NotSupportedError()
 
