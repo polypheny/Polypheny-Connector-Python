@@ -225,11 +225,15 @@ def test_serialize_varbinary(cur):
     assert cur.fetchone()[0] == b'Hello World'
     assert cur.fetchone() is None
 
-def test_serialize_not_implemented(cur):
-    cur.execute('DROP TABLE IF EXISTS t')
-    cur.execute('CREATE TABLE t(i INTEGER NOT NULL, a INTEGER, PRIMARY KEY(i))')
+@pytest.mark.parametrize('value', [[], {}, {'a': [None, {}, []], 'b': {'active': True}}])
+def test_serialize_containers_local(value):
+    assert polypheny.serialize.proto2py(polypheny.serialize.py2proto(value)) == value
+
+
+@pytest.mark.parametrize('value', [object(), {1: 'not a string key'}])
+def test_serialize_not_implemented(value):
     with pytest.raises(polypheny.NotSupportedError):
-        cur.execute('INSERT INTO t(i, a) VALUES (0, ?)', ({'a': 'b'},))
+        polypheny.serialize.py2proto(value)
 
 def test_trailing_semicolon(cur):
     cur.execute("SELECT 1;")
